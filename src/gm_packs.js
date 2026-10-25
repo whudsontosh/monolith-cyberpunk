@@ -23,7 +23,7 @@ function queueRulesBroadcast(){clearTimeout(rulesT);rulesT=setTimeout(()=>{if(Ho
 
 
 /* ---------- the shop: lock and setup ---------- */
-function shopSummary(){const s=st.shop;const hid=["w","a","c","g"].reduce((a,k)=>a+s.hide[k].length,0);const pr=["w","a","c","g"].reduce((a,k)=>a+Object.keys(s.price[k]).length,0);
+function shopSummary(){const s=st.shop;const hid=["w","a","c","g","p","d"].reduce((a,k)=>a+s.hide[k].length,0);const pr=["w","a","c","g","p","d"].reduce((a,k)=>a+Object.keys(s.price[k]).length,0);
   return hid||pr?[hid?`${hid} item${hid===1?"":"s"} not sold`:"",pr?`${pr} price change${pr===1?"":"s"}`:""].filter(Boolean).join(" · "):"Everything sold at list price"}
 function shopLockHTML(compact){const s=st.shop;
   return `<div class="shoplock ${s.locked?"closed":"open"}"><div class="row" style="justify-content:space-between;gap:8px"><span><span class="chip ${s.locked?"red":"green"}">Shop ${s.locked?"closed":"open"}</span>${!s.locked&&s.vendor?` <b>${esc(s.vendor)}</b>`:""}</span>
@@ -31,7 +31,7 @@ function shopLockHTML(compact){const s=st.shop;
     ${compact?"":`<div class="row" style="flex-wrap:nowrap;gap:6px"><input id="shop-vendor" value="${esc(s.vendor||"")}" placeholder="Vendor name players see (optional), e.g. Afterlife armory" maxlength="60" aria-label="Vendor name"></div>`}
     <span class="faint" style="font-size:12px">${s.locked?"Players in this campaign can browse but can't buy or add items until you open it.":"Players in this campaign can buy now."} Applies straight away to connected players.</span></div>`}
 function shopSetupBody(){const t=ui.shopSetTab||"w";const q=(ui.shopSetQ||"").toLowerCase();const s=st.shop;
-  const L=SHOP_LISTS[t]();const tabs=[["w","Weapons"],["a","Armor"],["c","Cyberware"],["g","Gear"]];
+  const L=SHOP_LISTS[t]();const tabs=[["w","Weapons"],["a","Armor"],["c","Cyberware"],["g","Gear"],["d","Decks"],["p","Programs"]];
   const rows=L.map((r,i)=>{if(q&&!r[0].toLowerCase().includes(q))return "";const hidden=s.hide[t].includes(r[0]);const pr=s.price[t][r[0]];const hb=PACK_SRC[t][r[0]];
     return `<div class="shop-row ssrow ${hidden?"off":""}"><label class="row" style="gap:8px;min-width:0;flex:1"><input type="checkbox" data-act-change="shop-sold" data-k="${t}" data-n="${esc(r[0])}" ${hidden?"":"checked"}><span class="t">${esc(r[0])}</span>${hb?`<span class="chip amber hbchip" title="${esc(hb)}">Homebrew</span>`:""}</label>
       <span class="faint mono" style="font-size:12px">list ${fmtEb(r[SHOP_COST_IX[t]])}</span><input type="number" min="0" class="ssprice" data-shop-price="${t}" data-n="${esc(r[0])}" value="${pr!=null?pr:""}" placeholder="${r[SHOP_COST_IX[t]]}" aria-label="Price for ${esc(r[0])}"></div>`}).join("");
@@ -44,24 +44,28 @@ function shopSetupBody(){const t=ui.shopSetTab||"w";const q=(ui.shopSetQ||"").to
     <div class="row" style="justify-content:space-between"><span class="faint" style="font-size:12.5px">${esc(shopSummary())}</span><button class="btn sm ghost" data-act="shopset-reset">Reset to the full catalog</button></div></div>`}
 
 /* ---------- homebrew editor ---------- */
-const HB_SECS=[["roles","Roles"],["skills","Skills"],["weapons","Weapons"],["armor","Armor"],["cyber","Cyberware"],["gear","Gear"]];
+const HB_SECS=[["roles","Roles"],["skills","Skills"],["weapons","Weapons"],["armor","Armor"],["cyber","Cyberware"],["gear","Gear"],["decks","Decks"],["programs","Programs & ICE"]];
 const HB_NEW={roles:()=>({name:"New role",ability:{name:"",stat:"INT",desc:""},skills:["Awareness/Notice","","","","","","","",""],income:[1000,1500,2000,3000,4500,6000],blurb:"",does:"",keyStats:[]}),
   skills:()=>({name:"New skill",stat:"INT",mult:1,desc:""}),
   weapons:()=>({name:"New weapon",type:"P",wa:0,conc:"J",avail:"C",dmg:"2D6",shots:10,rof:2,rel:"ST",range:50,cost:200,skill:"",desc:""}),
   armor:()=>({name:"New armor",sp:10,locs:["torso"],ev:0,cost:100,desc:""}),
   cyber:()=>({name:"New cyberware",cat:"Implants",cost:500,hc:"1D6",init:0,smart:false,mods:{},armor:null,desc:""}),
-  gear:()=>({name:"New item",cost:50,desc:""})};
+  gear:()=>({name:"New item",cost:50,desc:""}),
+  decks:()=>({name:"New deck",type:"standard",speed:0,wall:2,mu:10,cost:1000,desc:""}),
+  programs:()=>({name:"New program",cls:"Anti-IC",str:3,mu:2,cost:500,ice:false,fx:{prog:"1D6"},desc:""})};
 function hbPack(){return HLIB[ui.hbSel]||null}
 function hbEntry(){const p=hbPack();const sec=ui.hbSec||"roles";return p&&ui.hbIdx!=null?(p[sec]||[])[ui.hbIdx]:null}
 function hbNewPack(){const p={format:PACK_FORMAT,kind:"homebrew",id:"hb"+uid(),name:"New homebrew pack",author:"",description:"",rev:1,updated:Date.now(),roles:[],skills:[],weapons:[],armor:[],cyber:[],gear:[]};HLIB[p.id]=p;hbTouch(p.id);return p}
 function hbBaseClash(sec,name){const n=String(name||"").toLowerCase();if(!n)return "";
-  const base={roles:BASE_RULES.roles,skills:SKILL_DEFS.slice(0,BASE_RULES.skills).map(d0=>d0[0]).concat(BASE_RULES.abilities),weapons:WEAPONS.slice(0,BASE_RULES.w).map(r=>r[0]),armor:ARMOR.slice(0,BASE_RULES.a).map(r=>r[0]),cyber:CYBER.slice(0,BASE_RULES.c).map(r=>r[0]),gear:GEAR.slice(0,BASE_RULES.g).map(r=>r[0])}[sec]||[];
+  const base={roles:BASE_RULES.roles,skills:SKILL_DEFS.slice(0,BASE_RULES.skills).map(d0=>d0[0]).concat(BASE_RULES.abilities),weapons:WEAPONS.slice(0,BASE_RULES.w).map(r=>r[0]),armor:ARMOR.slice(0,BASE_RULES.a).map(r=>r[0]),cyber:CYBER.slice(0,BASE_RULES.c).map(r=>r[0]),gear:GEAR.slice(0,BASE_RULES.g).map(r=>r[0]),programs:PROGRAMS.slice(0,BASE_RULES.p).map(r=>r[0]),decks:DECKS.slice(0,BASE_RULES.d).map(r=>r[0])}[sec]||[];
   return base.some(b=>b.toLowerCase()===n)?"Same name as a built-in one, so it won't be added. Rename it.":""}
 function hbSummary(sec,e){if(sec==="roles")return `${e.ability&&e.ability.name||"no ability yet"} · ${(e.skills||[]).filter(Boolean).length} career skills`;
   if(sec==="skills")return `${e.stat}${Number(e.mult)>1?" · ×"+e.mult+" IP":""}`;
   if(sec==="weapons")return `${e.type} · ${e.dmg} · ${fmtEb(Number(e.cost)||0)}`;
   if(sec==="armor")return `SP ${e.sp} · ${(e.locs||[]).length} location${(e.locs||[]).length===1?"":"s"} · ${fmtEb(Number(e.cost)||0)}`;
   if(sec==="cyber")return `${e.cat} · HC ${e.hc} · ${fmtEb(Number(e.cost)||0)}`;
+  if(sec==="programs")return `${e.ice?"ICE · ":""}${e.cls} · STR ${e.str} · ${e.mu} MU · ${fmtEb(Number(e.cost)||0)}`;
+  if(sec==="decks")return `Speed ${sgn(Number(e.speed)||0)} · walls ${e.wall} · ${e.mu} MU · ${fmtEb(Number(e.cost)||0)}`;
   return fmtEb(Number(e.cost)||0)}
 const hbIn=(lab,path,val,o={})=>`<div class="field"${o.span?` style="grid-column:span ${o.span}"`:""}><label class="label">${lab}</label>${o.ta?`<textarea data-hbe="${path}" maxlength="${o.max||600}" placeholder="${esc(o.ph||"")}">${esc(val??"")}</textarea>`:o.sel?`<select data-hbe="${path}">${o.sel.map(x=>{const [v,l]=Array.isArray(x)?x:[x,x];return `<option value="${esc(v)}" ${String(val)===String(v)?"selected":""}>${esc(l)}</option>`}).join("")}</select>`:`<input data-hbe="${path}" ${o.num?`type="number" ${o.min!=null?`min="${o.min}"`:""} ${o.maxn!=null?`max="${o.maxn}"`:""}`:`maxlength="${o.max||60}"`} value="${esc(val??"")}" placeholder="${esc(o.ph||"")}" ${o.list?`list="${o.list}"`:""}>`}${o.help?`<span class="faint" style="font-size:12px">${o.help}</span>`:""}</div>`;
 const hbChecks=(lab,path,opts,sel)=>`<div class="field"><span class="label">${lab}</span><div class="row" style="gap:10px">${opts.map(([v,l])=>`<label class="row" style="gap:4px;font-size:13.5px"><input type="checkbox" data-hbck="${path}" value="${esc(v)}" ${(sel||[]).includes(v)?"checked":""}>${esc(l)}</label>`).join("")}</div></div>`;
@@ -88,7 +92,28 @@ function hbForm(sec,e){const statOpts=STAT_KEYS.map(s=>[s,s]);const w=hbBaseClas
     <div class="field"><span class="label">Stat changes</span><div class="row" style="gap:6px;flex-wrap:wrap">${STAT_KEYS.map(s=>`<label class="row" style="gap:3px"><span class="faint mono" style="font-size:11px">${s}</span><input type="number" min="-5" max="5" data-hbe="mods.${s}" value="${esc((e.mods||{})[s]??"")}" style="width:58px"></label>`).join("")}</div></div>
     <div class="grid3">${hbIn("Built-in armor SP","armor.sp",arm.sp,{num:1,min:0,maxn:60,help:"0 for none"})}</div>${Number(arm.sp)?hbChecks("Armor covers","armor.locs",LOCS.map(l=>[l[0],l[1]]),arm.locs||LOC_KEYS):""}
     ${hbIn("What it does","desc",e.desc,{ta:1,ph:"Shown when players point at it in the shop"})}`}
+  if(sec==="decks")return `${warn}<div class="grid3">${name}${hbIn("Kind","type",e.type,{sel:Object.entries(DECK_TYPES)})}${hbIn("Cost (eb)","cost",e.cost,{num:1,min:0})}</div>
+    <div class="grid3">${hbIn("Speed","speed",e.speed,{num:1,min:-5,maxn:10})}${hbIn("Data walls","wall",e.wall,{num:1,min:0,maxn:20})}${hbIn("Memory (MU)","mu",e.mu,{num:1,min:0,maxn:100})}</div>${hbIn("Description","desc",e.desc,{ta:1,ph:"Shown when players point at it in the shop"})}`;
+  if(sec==="programs")return `${warn}${hbProgramForm(e)}`;
   return `${warn}<div class="grid3">${name}${hbIn("Cost (eb)","cost",e.cost,{num:1,min:0})}</div>${hbIn("What it's for","desc",e.desc,{ta:1})}`}
+/* Programs and ICE: the effects a class can have are the ones the table tools can apply. */
+function hbProgramForm(e){const fx=e.fx||{};const cls=e.cls;const f=(lab,path,val,o)=>hbIn(lab,path,val,o||{});
+  const flag=(k,l)=>`<label class="row" style="gap:6px;font-size:13.5px"><input type="checkbox" data-hbbool="fx.${k}" ${fx[k]?"checked":""}> ${esc(l)}</label>`;
+  let eff="";
+  if(cls==="Intrusion")eff=`<div class="grid3">${f("Off the wall per attack (dice)","fx.wall",fx.wall,{ph:"e.g. 2D6",max:16})}${f("Opens it in (turns)","fx.open",fx.open,{num:1,min:0,maxn:10,help:"Like Worm. 0 for no"})}${f("Alerts on a D10 of","fx.alert",fx.alert,{num:1,min:0,maxn:10,help:"1 always alerts; blank never"})}</div>`;
+  if(cls==="Decryption")eff=`<div class="row">${flag("gate","Opens code gates")}${flag("lock","Opens file locks")}</div>${f("Strength against code gates","fx.vsGate",fx.vsGate,{num:1,min:0,maxn:10,help:"Blank to use its Strength"})}`;
+  if(cls==="Detection/Alarm")eff=`<div class="row">${flag("detect","Detects intruders")}${flag("trace","Traces them")}${flag("cut","Cuts their line")}${flag("see","Sees invisible ICONs")}${flag("dog","Counts as a \"Dog\"")}</div>`;
+  if(cls==="Evasion/Stealth")eff=`<div class="row">${flag("evade","Hides the runner")}</div>${f("Strength against Dogs","fx.vsDog",fx.vsDog,{num:1,min:0,maxn:10,help:"Blank to use its Strength"})}`;
+  if(cls==="Protection")eff=`<div class="grid3">${f("Damage cut when it fails","fx.reduce",fx.reduce,{num:1,min:0,maxn:10})}${f("Strength against Dogs","fx.vsDog",fx.vsDog,{num:1,min:0,maxn:10})}</div>`;
+  if(cls==="Anti-IC")eff=`<div class="grid3">${f("Strength damage per hit (dice)","fx.prog",fx.prog,{ph:"e.g. 1D6",max:16})}${f("De-rezzes instantly","fx.kills",fx.kills||"",{sel:[["","Nothing"],["Demon","Demons"],["Worm","Worms"]]})}</div><div class="row">${flag("mobile","Mobile (patrols outside the walls)")}</div>`;
+  if(cls==="Anti-Personnel")eff=`<div class="grid3">${f("Wound damage (dice)","fx.wound",fx.wound,{ph:"e.g. 1D10",max:16})}${f("INT loss (dice)","fx.int",fx.int,{ph:"e.g. 1D6",max:16})}${f("Status it causes","fx.status",fx.status,{ph:"e.g. Frozen",max:60})}</div><div class="grid3">${f("Status lasts (turns, dice)","fx.dur",fx.dur,{ph:"e.g. 1D6",max:16})}</div><div class="row">${flag("out","Dumps the runner out of the Net")}${flag("mobile","Mobile")}${flag("dog","Counts as a \"Dog\"")}</div>`;
+  if(cls==="Anti-System")eff=`<div class="grid3">${f("Crashes for (turns, dice)","fx.crash",fx.crash,{ph:"e.g. 1D6",max:16})}${f("Effect on a deck","fx.deckFx",fx.deckFx,{max:120})}${f("Effect on a system","fx.sys",fx.sys,{max:120})}</div><div class="row">${flag("out","Drops the runner out of the Net")}</div>`;
+  if(cls==="Controller")eff=hbChecks("Controls","fx.ctrl",REMOTE_KINDS.map(k=>[k,k]),fx.ctrl||[]);
+  if(cls==="Demon")eff=f("Programs it carries","fx.carry",fx.carry,{num:1,min:0,maxn:10});
+  return `<div class="grid3">${hbIn("Name","name",e.name)}${hbIn("Class","cls",cls,{sel:PROG_CLASSES})}<div class="field"><span class="label">ICE</span><label class="row" style="gap:6px"><input type="checkbox" data-hbbool="ice" ${e.ice?"checked":""}> Only for fortresses (not sold)</label></div></div>
+    <div class="grid3">${hbIn("Strength","str",e.str,{num:1,min:0,maxn:10})}${hbIn("Memory (MU)","mu",e.mu,{num:1,min:0,maxn:40})}${hbIn("Cost (eb)","cost",e.cost,{num:1,min:0})}</div>
+    <div class="field"><span class="label">What it does in play</span><div style="display:grid;gap:8px">${eff||`<span class="faint" style="font-size:12.5px">Utilities work on a 1D10 roll equal to or under their Strength.</span>`}</div></div>
+    ${hbIn("Description","desc",e.desc,{ta:1,ph:"Shown when players point at it, and in the fortress editor"})}`}
 function viewHomebrew(){const packs=Object.values(HLIB).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   if(ui.hbSel&&!HLIB[ui.hbSel])ui.hbSel=null;if(!ui.hbSel&&packs.length)ui.hbSel=packs[0].id;
   const p=hbPack();const sec=ui.hbSec||"roles";const list=p?(p[sec]||[]):[];const e=hbEntry();
@@ -104,7 +129,7 @@ function viewHomebrew(){const packs=Object.values(HLIB).sort((a,b)=>String(a.nam
       <div class="field"><label class="label">Description</label><textarea data-hbf="description" maxlength="600" placeholder="What's in this pack, for players and other GMs">${esc(p.description||"")}</textarea></div>
       <div class="seg hbsecs" role="group" aria-label="Section">${HB_SECS.map(([k,l])=>`<button class="${sec===k?"on":""}" data-act="hb-sec" data-v="${k}">${l}${(p[k]||[]).length?` · ${(p[k]||[]).length}`:""}</button>`).join("")}</div>
       <div class="hb-split"><div class="hb-list">${list.map((x,i)=>`<button class="hb-item ${ui.hbIdx===i?"on":""}" data-act="hb-edit" data-i="${i}"><b>${esc(x.name||"Untitled")}</b><span class="faint">${esc(hbSummary(sec,x))}</span>${hbBaseClash(sec,x.name)?`<span class="chip red">Name clash</span>`:""}</button>`).join("")}
-          <button class="btn sm" data-act="hb-add">+ Add ${({roles:"role",skills:"skill",weapons:"weapon",armor:"armor",cyber:"cyberware",gear:"gear item"})[sec]}</button></div>
+          <button class="btn sm" data-act="hb-add">+ Add ${({roles:"role",skills:"skill",weapons:"weapon",armor:"armor",cyber:"cyberware",gear:"gear item",decks:"deck",programs:"program or ICE"})[sec]}</button></div>
         <div class="hb-form">${e?`<div style="display:grid;gap:10px">${hbForm(sec,e)}<div class="row" style="justify-content:space-between"><button class="btn sm ghost" data-act="hb-copy">Duplicate</button><button class="btn sm ghost danger" data-act="hb-rm">${ui.confirm==="hbrm"?"Confirm remove":"Remove"}</button></div></div>`:`<p class="faint" style="margin:0">Pick something on the left to edit it, or add a new one.</p>`}</div></div>
     </div></section>`:`<div class="empty"><h3>No homebrew yet</h3><p class="muted" style="margin:0">Create a pack to add your own roles, skills, weapons, armor, cyberware and gear. Packs you use in a campaign install on your players' apps when they join.</p></div>`;
   return `<div class="roster-head"><h1><small>Homebrew</small>Your own rules</h1></div>
@@ -127,7 +152,7 @@ document.addEventListener("input",ev=>{const el=ev.target;if(!el.dataset)return;
 document.addEventListener("change",ev=>{const el=ev.target;if(!el.dataset)return;
   if(el.dataset.hbck){const p=hbPack(),e=hbEntry();if(!p||!e)return;const path=el.dataset.hbck;const cur=path.split(".").reduce((o,k)=>o&&o[k],e);const set=new Set(Array.isArray(cur)?cur:[]);
     if(el.checked)set.add(el.value);else set.delete(el.value);let arr=[...set];if(path==="keyStats")arr=arr.slice(0,3);hbSet(e,path,arr);hbTouch(p.id);return}
-  if(el.dataset.hbbool){const p=hbPack(),e=hbEntry();if(!p||!e)return;e[el.dataset.hbbool]=el.checked;hbTouch(p.id)}});
+  if(el.dataset.hbbool){const p=hbPack(),e=hbEntry();if(!p||!e)return;hbSet(e,el.dataset.hbbool,el.checked);hbTouch(p.id)}});
 const hbFileIn=document.createElement("input");hbFileIn.type="file";hbFileIn.accept=".cp2020homebrew,.cp2020campaign,.json,.zip";hbFileIn.multiple=true;hbFileIn.hidden=true;document.body.appendChild(hbFileIn);
 let hbFileMode="any";
 hbFileIn.addEventListener("change",()=>{const fs=[...hbFileIn.files];hbFileIn.value="";gmOpenPackageFiles(fs,hbFileMode)});
@@ -156,7 +181,7 @@ Object.assign(A,{
   "shopset-tab":el=>{ui.shopSetTab=el.dataset.v;renderModal()},
   "shopset-all":el=>{const k=ui.shopSetTab||"w";st.shop.hide[k]=el.dataset.v==="1"?[]:SHOP_LISTS[k]().map(r=>r[0]);save();renderModal();queueRulesBroadcast()},
   "shopset-reset":()=>{const keep={locked:st.shop.locked,vendor:st.shop.vendor};st.shop={...sanitizeShop(null),...keep};save();renderModal();render();queueRulesBroadcast()},
-  "pkg-save-open":()=>{ui.pkgOpts=ui.pkgOpts||{npcs:true,maps:true,encounter:true,notes:true,shop:true,homebrew:true,name:st.campaign.name||"Campaign",author:"",description:""};ui.modal="pkg-export";renderModal()},
+  "pkg-save-open":()=>{ui.pkgOpts=ui.pkgOpts||{npcs:true,maps:true,encounter:true,notes:true,shop:true,homebrew:true,forts:true,name:st.campaign.name||"Campaign",author:"",description:""};ui.modal="pkg-export";renderModal()},
   "pkg-do-save":()=>exportCampaignPackage(),
   "pkg-add":()=>{hbFileMode="merge";hbFileIn.click()},
   "pkg-new":()=>{hbFileMode="new";hbFileIn.click()},
@@ -211,7 +236,7 @@ function pkgExportBody(){const o=ui.pkgOpts;const camp=campaignPacks();const npc
     <div class="grid2"><div class="field"><label class="label" for="pkg-name">Package name</label><input id="pkg-name" data-pkgo="name" value="${esc(o.name)}" maxlength="60"></div><div class="field"><label class="label" for="pkg-author">Author</label><input id="pkg-author" data-pkgo="author" value="${esc(o.author)}" maxlength="60"></div></div>
     <div class="field"><label class="label" for="pkg-desc">Description</label><textarea id="pkg-desc" data-pkgo="description" maxlength="600" placeholder="The pitch: setting, length, what the crew gets into">${esc(o.description)}</textarea></div>
     <div class="field"><span class="label">Include</span>
-      ${ck("npcs",`Your NPCs (${st.npcs.length}) with portraits`)}${ck("maps",`Maps (${(st.maps||[]).length}) with images, tokens, drawings and fog`)}${ck("encounter",`The current encounter (${npcEnc} NPCs)`)}${ck("notes","Campaign summary and GM notes")}${ck("shop",`Shop setup (${esc(shopSummary())})`)}${ck("homebrew",`Homebrew packs it uses (${camp.length})`)}</div>
+      ${ck("npcs",`Your NPCs (${st.npcs.length}) with portraits`)}${ck("maps",`Maps (${(st.maps||[]).length}) with images, tokens, drawings and fog`)}${ck("encounter",`The current encounter (${npcEnc} NPCs)`)}${ck("notes","Campaign summary and GM notes")}${ck("shop",`Shop setup (${esc(shopSummary())})`)}${ck("homebrew",`Homebrew packs it uses (${camp.length})`)}${ck("forts",`Data fortresses (${((st.net&&st.net.forts)||[]).length})`)}</div>
     ${!Desk&&(st.maps||[]).length?`<div class="banner warnb" style="margin:0">Images can only be packaged from the desktop app.</div>`:""}
     <div class="row" style="justify-content:flex-end"><button class="btn ghost" data-act="close-modal">Cancel</button><button class="btn primary" data-act="pkg-do-save" ${ui.pkgBusy?"disabled":""}>${ui.pkgBusy?esc(ui.pkgBusy):"Save campaign package…"}</button></div></div>`}
 async function exportCampaignPackage(){const o=ui.pkgOpts;if(ui.pkgBusy)return;ui.pkgBusy="Packing…";renderModal();
@@ -222,17 +247,18 @@ async function exportCampaignPackage(){const o=ui.pkgOpts;if(ui.pkgBusy)return;u
     if(o.maps){const enc=new Set(data.encounter.list.map(cb=>cb.cid));data.maps=clone(st.maps).map(m=>({...m,tokens:m.tokens.filter(t=>t.kind!=="pc").map(t=>t.kind==="npc"&&!enc.has(t.ref)?{...t,kind:"marker",ref:null}:t)}));data.activeMap=st.activeMap}
     if(o.shop)data.shop={...st.shop,locked:false,vendor:""};
     if(o.homebrew)data.homebrew=campaignPacks();
+    if(o.forts&&st.net&&(st.net.forts||[]).length)data.forts=clone(st.net.forts);
     const files=[];let missing=0;
     if(Host.port){const ids=pkgAssetsOf(data);let i=0;for(const id of ids){i++;ui.pkgBusy=`Packing images ${i}/${ids.length}…`;renderModal();
         try{const r=await fetch(mapAssetUrl(id));if(!r.ok)throw 0;files.push({name:"assets/"+id,data:new Uint8Array(await r.arrayBuffer())})}catch(e){missing++}}}
-    data.counts={npcs:data.npcs.length,maps:data.maps.length,encounter:data.encounter.list.length,homebrew:data.homebrew.length,images:files.length};
+    data.counts={npcs:data.npcs.length,maps:data.maps.length,encounter:data.encounter.list.length,homebrew:data.homebrew.length,forts:(data.forts||[]).length,images:files.length};
     files.unshift({name:"package.json",data:new TextEncoder().encode(JSON.stringify(data))});
     const blob=zipBuild(files);const name=packFileName(data,"cp2020campaign");
     if(downloadText(name,blob,"application/zip")){ui.modal=null;renderModal();showNotice(`Saved ${name}${missing?` (${missing} image${missing===1?"":"s"} couldn't be read)`:""}.`)}}
   catch(e){showNotice("Couldn't save the package: "+(e.message||e))}
   finally{ui.pkgBusy=null;if(ui.modal)renderModal()}}
-function pkgImportBody(){const p=ui.pkgPending;if(!p)return "";const r=p.raw;const c=r.counts||{npcs:(r.npcs||[]).length,maps:(r.maps||[]).length,encounter:(r.encounter&&r.encounter.list||[]).length,homebrew:(r.homebrew||[]).length};
-  const bits=[c.npcs&&`${c.npcs} NPC${c.npcs===1?"":"s"}`,c.maps&&`${c.maps} map${c.maps===1?"":"s"}`,c.encounter&&`an encounter (${c.encounter})`,c.homebrew&&`${c.homebrew} homebrew pack${c.homebrew===1?"":"s"}`,r.shop&&"a shop setup",(r.campaign&&(r.campaign.notes||r.campaign.summary))&&"campaign notes"].filter(Boolean);
+function pkgImportBody(){const p=ui.pkgPending;if(!p)return "";const r=p.raw;const c=r.counts||{npcs:(r.npcs||[]).length,maps:(r.maps||[]).length,encounter:(r.encounter&&r.encounter.list||[]).length,homebrew:(r.homebrew||[]).length,forts:(r.forts||[]).length};
+  const bits=[c.npcs&&`${c.npcs} NPC${c.npcs===1?"":"s"}`,c.maps&&`${c.maps} map${c.maps===1?"":"s"}`,c.encounter&&`an encounter (${c.encounter})`,c.homebrew&&`${c.homebrew} homebrew pack${c.homebrew===1?"":"s"}`,c.forts&&`${c.forts} data fortress${c.forts===1?"":"es"}`,r.shop&&"a shop setup",(r.campaign&&(r.campaign.notes||r.campaign.summary))&&"campaign notes"].filter(Boolean);
   const busy=ui.pkgBusy;
   return `<div style="display:grid;gap:14px">
     <div class="delcard"><div class="portrait" style="background:#3d4352">${icon?icon("map"):""}</div><div style="min-width:0"><b class="delname">${esc(pkStr(r.name)||"Campaign package")}</b><div class="muted" style="font-size:14px">${r.author?"by "+esc(pkStr(r.author))+" · ":""}${esc(bits.join(", ")||"empty")}</div></div></div>
@@ -258,13 +284,14 @@ async function importCampaignPackage(mode){const p=ui.pkgPending;if(!p||ui.pkgBu
     const fix=id=>id&&remap[id]?remap[id]:undefined;
     npcs.forEach(n=>{n.img=fix(n.img);if(!n.img)delete n.img});enc.forEach(cb=>{cb.npc.img=fix(cb.npc.img);if(!cb.npc.img)delete cb.npc.img});
     maps.forEach(m=>{m.asset=fix(m.asset)||null;m.tokens.forEach(t=>{t.img=fix(t.img);if(!t.img)delete t.img})});
+    const forts=(Array.isArray(r.forts)?r.forts:[]).slice(0,60).map(sanFort).filter(Boolean);
     const shop=r.shop?sanitizeShop(r.shop):null;const name=pkStr(r.name)||"Campaign";
     const summary=pkText(r.campaign&&r.campaign.summary,4000),notes=pkText(r.campaign&&r.campaign.notes,20000);
     const pkg={id:pkId(r.id),name,rev:pkNum(r.rev,1,1e6,1)};
-    if(mode==="new"){const data={...defaultState(),campaign:{name,summary,notes,sessions:[]},npcs,maps,activeMap:maps[activeIdx]?maps[activeIdx].id:(maps[0]?maps[0].id:null),encounter:{round:1,turn:0,list:enc},packs:hbIds,shop:shop||sanitizeShop(null),pkg};
+    if(mode==="new"){const data={...defaultState(),campaign:{name,summary,notes,sessions:[]},npcs,maps,activeMap:maps[activeIdx]?maps[activeIdx].id:(maps[0]?maps[0].id:null),encounter:{round:1,turn:0,list:enc},packs:hbIds,shop:shop||sanitizeShop(null),pkg,net:{forts,run:null}};
       const id=campCreate(name,data,{freshPassword:true,clearLog:true});ui.pkgPending=null;ui.pkgBusy=null;ui.modal=null;renderModal();
       if(id){showNotice(`Created "${campEntry(id).name}" from the package.`);campSwitch(id,"open")}}
-    else{st.npcs.push(...npcs);st.maps.push(...maps);if(!st.activeMap&&maps[0])st.activeMap=maps[0].id;st.encounter.list.push(...enc);st.packs=[...new Set([...(st.packs||[]),...hbIds])];
+    else{st.npcs.push(...npcs);st.maps.push(...maps);netState().forts.push(...forts);if(!st.activeMap&&maps[0])st.activeMap=maps[0].id;st.encounter.list.push(...enc);st.packs=[...new Set([...(st.packs||[]),...hbIds])];
       if(shop&&shopIsDefault(st.shop))st.shop={...shop,locked:st.shop.locked,vendor:st.shop.vendor};
       if(summary||notes)st.campaign.notes=[st.campaign.notes,`--- From "${name}" ---`,summary,notes].filter(Boolean).join("\n\n");
       snapshot(`Added package "${name}"`,true);persist();RULES_KEY="";queueRulesBroadcast();ui.pkgPending=null;ui.pkgBusy=null;ui.modal=null;render();

@@ -10,9 +10,9 @@
    catalogs (ROLES, SKILL_DEFS, WEAPONS, ARMOR, CYBER, GEAR) without touching the base data. */
 
 const PACK_FORMAT="monolith-pack";const PACK_GAME="cyberpunk",PACK_RULESET="cp2020";
-const BASE_RULES={roles:ROLE_NAMES.slice(),skills:SKILL_DEFS.length,w:WEAPONS.length,a:ARMOR.length,c:CYBER.length,g:GEAR.length,abilities:Object.keys(ABILITIES)};
-const PACK_SRC={role:{},skill:{},w:{},a:{},c:{},g:{}};      // name -> pack name, for "Homebrew" labels
-const ITEM_DESC={w:{},a:{},c:{},g:{},skill:{}};               // name -> description written in the pack
+const BASE_RULES={roles:ROLE_NAMES.slice(),skills:SKILL_DEFS.length,w:WEAPONS.length,a:ARMOR.length,c:CYBER.length,g:GEAR.length,p:PROGRAMS.length,d:DECKS.length,abilities:Object.keys(ABILITIES)};
+const PACK_SRC={role:{},skill:{},w:{},a:{},c:{},g:{},p:{},d:{}};      // name -> pack name, for "Homebrew" labels
+const ITEM_DESC={w:{},a:{},c:{},g:{},p:{},d:{},skill:{}};               // name -> description written in the pack
 const CYBER_CATS=["Fashionware","Neuralware","Cyberoptics","Cyberaudio","Implants","Cyberweapons","Cyberlimbs"];
 const PK_LIMITS={roles:60,skills:300,items:600,text:600,name:60};
 let RULES_KEY="";
@@ -32,7 +32,7 @@ function sanitizeHomebrew(raw){
   const problems=[];const seen=new Set();
   const uniq=(kind,name)=>{const k=kind+"|"+name.toLowerCase();if(!name){problems.push(`A ${kind} without a name was skipped.`);return false}if(seen.has(k)){problems.push(`Duplicate ${kind} "${name}" was skipped.`);return false}seen.add(k);return true};
   const p={format:PACK_FORMAT,kind:"homebrew",game:PACK_GAME,ruleset:PACK_RULESET,id:pkId(raw.id),name:pkStr(raw.name)||"Homebrew pack",author:pkStr(raw.author),description:pkText(raw.description),rev:pkNum(raw.rev,1,1e6,1),updated:pkNum(raw.updated,0,9e15,Date.now()),
-    roles:[],skills:[],weapons:[],armor:[],cyber:[],gear:[]};
+    roles:[],skills:[],weapons:[],armor:[],cyber:[],gear:[],programs:[],decks:[]};
   (Array.isArray(raw.skills)?raw.skills:[]).slice(0,PK_LIMITS.skills).forEach(s=>{const name=pkStr(s&&s.name);if(!uniq("skill",name))return;
     p.skills.push({name,stat:pkEnum(s.stat,STAT_KEYS,"INT"),mult:pkNum(s.mult,1,5,1),desc:pkText(s.desc)})});
   (Array.isArray(raw.roles)?raw.roles:[]).slice(0,PK_LIMITS.roles).forEach(r=>{const name=pkStr(r&&r.name);if(!uniq("role",name))return;
@@ -57,15 +57,31 @@ function sanitizeHomebrew(raw){
     p.cyber.push({name,cat:pkStr(x.cat,30)||"Implants",cost:pkNum(x.cost,0,1e7,0),hc,init:pkNum(x.init,0,5,0),smart:!!x.smart,mods,armor:arm,desc:pkText(x.desc)})});
   (Array.isArray(raw.gear)?raw.gear:[]).slice(0,PK_LIMITS.items).forEach(g=>{const name=pkStr(g&&g.name);if(!uniq("gear",name))return;
     p.gear.push({name,cost:pkNum(g.cost,0,1e7,0),desc:pkText(g.desc)})});
+  (Array.isArray(raw.programs)?raw.programs:[]).slice(0,PK_LIMITS.items).forEach(x=>{const name=pkStr(x&&x.name);if(!uniq("program",name))return;p.programs.push(sanitizeProgram(x,name))});
+  (Array.isArray(raw.decks)?raw.decks:[]).slice(0,PK_LIMITS.items).forEach(x=>{const name=pkStr(x&&x.name);if(!uniq("deck",name))return;
+    p.decks.push({name,type:Object.keys(DECK_TYPES).includes(x.type)?x.type:"standard",speed:pkNum(x.speed,-5,10,0),wall:pkNum(x.wall,0,20,2),mu:pkNum(x.mu,0,100,10),cost:pkNum(x.cost,0,1e7,0),desc:pkText(x.desc)})});
   return {pack:p,problems}}
-function sanitizeShop(raw){const out={hide:{w:[],a:[],c:[],g:[]},price:{w:{},a:{},c:{},g:{}},locked:false,vendor:""};if(!raw||typeof raw!=="object")return out;
+/* A program from a pack (or the GM's fortress editor): numbers clamped, effects limited to known keys. */
+const PK_FX_DICE=["wall","prog","wound","int","dur","crash"];const PK_FX_FLAGS=["gate","lock","detect","trace","cut","dog","follow","see","real","speedtrap","evade","invisible","protect","mobile","out","fire","lasting","worm","deckOnly","wreck","rerezz"];
+function sanitizeFx(fx){const o={};if(!fx||typeof fx!=="object")return o;
+  for(const k of PK_FX_DICE)if(fx[k]){const v=pkStr(fx[k],16).toUpperCase().replace(/\s+/g,"");if(parseDice(v))o[k]=v}
+  for(const k of PK_FX_FLAGS)if(fx[k])o[k]=1;
+  if(fx.alert==="always")o.alert="always";else if(Number(fx.alert))o.alert=pkNum(fx.alert,1,10,10);
+  for(const k of ["open","vsGate","vsDog","reduce","carry"])if(Number(fx[k]))o[k]=pkNum(fx[k],0,10,0);
+  for(const k of ["status","durText","deck","sys","deckFx"])if(fx[k])o[k]=pkStr(fx[k],120);
+  if(fx.kills==="Demon"||fx.kills==="Worm")o.kills=fx.kills;
+  for(const k of ["only","reduces"])if(Array.isArray(fx[k]))o[k]=fx[k].map(v=>pkStr(v,40)).filter(Boolean).slice(0,12);
+  if(Array.isArray(fx.ctrl))o.ctrl=fx.ctrl.filter(v=>REMOTE_KINDS.includes(v));
+  return o}
+function sanitizeProgram(x,name){return {name:name||pkStr(x&&x.name)||"Program",cls:PROG_CLASSES.includes(x.cls)?x.cls:"Utility",str:pkNum(x.str,0,10,3),mu:pkNum(x.mu,0,40,1),cost:pkNum(x.cost,0,1e7,0),ice:!!x.ice,fx:sanitizeFx(x.fx),desc:pkText(x.desc)}}
+function sanitizeShop(raw){const out={hide:{w:[],a:[],c:[],g:[],p:[],d:[]},price:{w:{},a:{},c:{},g:{},p:{},d:{}},locked:false,vendor:""};if(!raw||typeof raw!=="object")return out;
   out.locked=!!raw.locked;out.vendor=pkStr(raw.vendor,60);
-  for(const k of ["w","a","c","g"]){out.hide[k]=[...new Set((Array.isArray(raw.hide&&raw.hide[k])?raw.hide[k]:[]).map(n=>pkStr(n,80)).filter(Boolean))].slice(0,3000);
+  for(const k of ["w","a","c","g","p","d"]){out.hide[k]=[...new Set((Array.isArray(raw.hide&&raw.hide[k])?raw.hide[k]:[]).map(n=>pkStr(n,80)).filter(Boolean))].slice(0,3000);
     const pr=raw.price&&raw.price[k];if(pr&&typeof pr==="object")Object.entries(pr).slice(0,3000).forEach(([n,v])=>{n=pkStr(n,80);if(n)out.price[k][n]=pkNum(v,0,1e7,0)})}
   return out}
-function shopIsDefault(s){return !s||["w","a","c","g"].every(k=>!(s.hide&&s.hide[k]||[]).length&&!Object.keys(s.price&&s.price[k]||{}).length)}
+function shopIsDefault(s){return !s||["w","a","c","g","p","d"].every(k=>!(s.hide&&s.hide[k]||[]).length&&!Object.keys(s.price&&s.price[k]||{}).length)}
 function packCounts(p){const parts=[];const n=(l,one,many)=>{if(l&&l.length)parts.push(`${l.length} ${l.length===1?one:many}`)};
-  n(p.roles,"role","roles");n(p.skills,"skill","skills");n(p.weapons,"weapon","weapons");n(p.armor,"armor","armor");n(p.cyber,"cyberware","cyberware");n(p.gear,"gear item","gear items");
+  n(p.roles,"role","roles");n(p.skills,"skill","skills");n(p.weapons,"weapon","weapons");n(p.armor,"armor","armor");n(p.cyber,"cyberware","cyberware");n(p.gear,"gear item","gear items");n((p.programs||[]).filter(x=>!x.ice),"program","programs");n((p.programs||[]).filter(x=>x.ice),"ICE","ICE");n(p.decks,"deck","decks");
   return parts.join(" · ")||"Empty"}
 function packRef(p){return {id:p.id,name:p.name,rev:p.rev}}
 
@@ -76,9 +92,9 @@ function activateRules(packs){packs=(packs||[]).filter(Boolean);const key=packs.
   ROLE_NAMES.length=0;ROLE_NAMES.push(...BASE_RULES.roles);
   for(const n of Object.keys(ABILITIES))if(!BASE_RULES.abilities.includes(n))delete ABILITIES[n];
   for(const d0 of SKILL_DEFS.splice(BASE_RULES.skills))delete SKILL_BY_NAME[d0[0]];
-  WEAPONS.length=BASE_RULES.w;ARMOR.length=BASE_RULES.a;CYBER.length=BASE_RULES.c;GEAR.length=BASE_RULES.g;
+  WEAPONS.length=BASE_RULES.w;ARMOR.length=BASE_RULES.a;CYBER.length=BASE_RULES.c;GEAR.length=BASE_RULES.g;PROGRAMS.length=BASE_RULES.p;DECKS.length=BASE_RULES.d;
   for(const k in PACK_SRC)PACK_SRC[k]={};for(const k in ITEM_DESC)ITEM_DESC[k]={};
-  const taken=kind=>({w:new Set(WEAPONS.map(r=>r[0].toLowerCase())),a:new Set(ARMOR.map(r=>r[0].toLowerCase())),c:new Set(CYBER.map(r=>r[0].toLowerCase())),g:new Set(GEAR.map(r=>r[0].toLowerCase()))})[kind];
+  const taken=kind=>({w:new Set(WEAPONS.map(r=>r[0].toLowerCase())),a:new Set(ARMOR.map(r=>r[0].toLowerCase())),c:new Set(CYBER.map(r=>r[0].toLowerCase())),g:new Set(GEAR.map(r=>r[0].toLowerCase())),p:new Set(PROGRAMS.map(r=>r[0].toLowerCase())),d:new Set(DECKS.map(r=>r[0].toLowerCase()))})[kind];
   for(const p of packs){
     for(const s of p.skills||[]){if(SKILL_BY_NAME[s.name]||ABILITIES[s.name])continue;SKILL_DEFS.push([s.name,s.stat,s.mult]);SKILL_BY_NAME[s.name]={n:s.name,s:s.stat,m:s.mult,pack:p.name};PACK_SRC.skill[s.name]=p.name;if(s.desc)ITEM_DESC.skill[s.name]=s.desc}
     for(const r of p.roles||[]){if(ROLES[r.name]||ABILITIES[r.ability.name]||SKILL_BY_NAME[r.ability.name])continue;ROLES[r.name]=roleFromPack(r,p);ROLE_NAMES.push(r.name);
@@ -87,7 +103,9 @@ function activateRules(packs){packs=(packs||[]).filter(Boolean);const key=packs.
     add("w",p.weapons,w=>WEAPONS.push([w.name,w.type,w.wa,w.conc,w.avail,w.dmg,w.shots?String(w.shots):"",String(w.rof),w.rel,w.range+"m",w.cost,w.skill||""]));
     add("a",p.armor,a=>ARMOR.push([a.name,a.sp,a.locs.slice(),a.ev,a.cost]));
     add("c",p.cyber,x=>{const ex={};if(x.init)ex.init=x.init;if(x.smart)ex.smart=1;if(Object.keys(x.mods||{}).length)ex.mods={...x.mods};if(x.armor)ex.armor={sp:x.armor.sp,locs:x.armor.locs.slice()};CYBER.push([x.name,x.cat,x.cost,x.hc,ex])});
-    add("g",p.gear,g=>GEAR.push([g.name,g.cost]))}
+    add("g",p.gear,g=>GEAR.push([g.name,g.cost]));
+    add("p",p.programs,x=>{const r=[x.name,x.cls,x.str,x.mu,x.cost,clone(x.fx||{}),x.desc||""];if(x.ice)r.ice=true;PROGRAMS.push(r)});
+    add("d",p.decks,x=>DECKS.push([x.name,x.type,x.speed,x.wall,x.mu,x.cost,[],x.desc||""]))}
   return true}
 function roleFromPack(r,p){return {ab:r.ability.name,abStat:r.ability.stat,blurb:r.blurb||r.does||"Homebrew role.",skills:r.skills.slice(),income:r.income.slice(),homebrew:true,pack:p?p.name:(r.pack||""),
   guide:{does:r.does||r.blurb||"",stats:r.keyStats&&r.keyStats.length?r.keyStats.slice():[r.ability.stat],ability:r.ability.desc||""}}}
@@ -106,8 +124,8 @@ function stampHomebrew(c,packs){if(!c||c.id==="sample")return;const hb={roles:{}
 function BASE_SKILL(n){return SKILL_DEFS.slice(0,BASE_RULES.skills).some(d0=>d0[0]===n)}
 
 /* ---------- campaign shop ---------- */
-const SHOP_LISTS={w:()=>WEAPONS,a:()=>ARMOR,c:()=>CYBER,g:()=>GEAR};
-const SHOP_COST_IX={w:10,a:4,c:2,g:1};
+const SHOP_LISTS={w:()=>WEAPONS,a:()=>ARMOR,c:()=>CYBER,g:()=>GEAR,p:()=>PROGRAMS.filter(r=>!r.ice),d:()=>DECKS};
+const SHOP_COST_IX={w:10,a:4,c:2,g:1,p:4,d:5};
 function shopHidden(shop,kind,name){return !!(shop&&shop.hide&&(shop.hide[kind]||[]).includes(name))}
 function shopPrice(shop,kind,row){const o=shop&&shop.price&&shop.price[kind];const n=row[0];return o&&o[n]!=null?o[n]:row[SHOP_COST_IX[kind]]}
 

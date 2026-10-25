@@ -104,7 +104,7 @@ const ARMOR=[
 // name, category, cost, HC dice, extra
 const CYBER=[
  ["Light tattoo","Fashionware",40,"1",{}],["Shift-tacts","Fashionware",400,"1",{}],["Skinwatch","Fashionware",100,"1",{}],["Techhair","Fashionware",200,"1",{}],["Biomonitor","Fashionware",700,"2",{}],
- ["Neural processor","Neuralware",1000,"1D6",{}],["Interface plugs","Neuralware",200,"1D6",{}],["Kerenzikov boost +1","Neuralware",500,"1D6",{init:1}],["Kerenzikov boost +2","Neuralware",1000,"1D6",{init:2}],["Sandevistan speedware +3","Neuralware",1600,"1D6",{init:3}],["Pain editor","Neuralware",200,"2D6",{}],["Tactile boost","Neuralware",100,"1D6/2",{}],["Olfactory boost","Neuralware",200,"1D6/2",{}],["Chipware socket","Neuralware",200,"1D6/2",{}],["Vehicle link","Neuralware",100,"1D6/2",{}],["Smartgun link","Neuralware",100,"1D6/2",{smart:1}],
+ ["Neural processor","Neuralware",1000,"1D6",{}],["Interface plugs","Neuralware",200,"1D6",{}],["Kerenzikov boost +1","Neuralware",500,"1D6",{init:1}],["Kerenzikov boost +2","Neuralware",1000,"1D6",{init:2}],["Sandevistan speedware +3","Neuralware",1600,"1D6",{init:3}],["Pain editor","Neuralware",200,"2D6",{}],["Tactile boost","Neuralware",100,"1D6/2",{}],["Olfactory boost","Neuralware",200,"1D6/2",{}],["Chipware socket","Neuralware",200,"1D6/2",{}],["Cybermodem link","Neuralware",100,"1",{}],["Vehicle link","Neuralware",100,"1D6/2",{}],["Smartgun link","Neuralware",100,"1D6/2",{smart:1}],
  ["Cyberoptic (one eye)","Cyberoptics",500,"1D6",{}],["Low-lite","Cyberoptics",200,"1",{}],["Infrared","Cyberoptics",500,"1D6/2",{}],["Targeting scope","Cyberoptics",300,"1D6/2",{}],["Times Square marquee","Cyberoptics",300,"1",{}],["Anti-dazzle","Cyberoptics",200,"1",{}],["Teleoptics","Cyberoptics",150,"1",{}],["Image enhancement","Cyberoptics",300,"1D6/2",{}],
  ["Cyberaudio suite","Cyberaudio",500,"1D6",{}],["Radio link","Cyberaudio",100,"1",{}],["Phone splice","Cyberaudio",300,"1",{}],["Amplified hearing","Cyberaudio",200,"1",{}],["Level damper","Cyberaudio",200,"1",{}],["Voice stress analyzer","Cyberaudio",200,"1D6/2",{}],
  ["Nasal filters","Implants",200,"1",{}],["Toxin binders","Implants",200,"1",{}],["Enhanced antibodies","Implants",300,"1",{}],["Contraceptive implant","Implants",100,"0",{}],["Grafted muscle (+1 BODY)","Implants",1000,"2D6",{mods:{BODY:1}}],["Muscle & bone lace (+2 BODY)","Implants",1500,"2D6",{mods:{BODY:2}}],["Skinweave (SP 12)","Implants",2000,"2D6",{armor:{sp:12,locs:LOC_KEYS}}],["Subdermal armor (SP 18 torso)","Implants",1200,"2D6",{armor:{sp:18,locs:["torso"]}}],
@@ -153,7 +153,7 @@ function blankChar(){
     statMethod:"cinematic",statPool:60,stats:{INT:2,REF:2,TECH:2,COOL:2,ATTR:2,LUCK:2,MA:2,BODY:2,EMP:2},
     skills:{},roleChoices:{},customSkills:[],
     ip:{total:0,spent:0},ipLog:[],rep:0,eb:0,luckSpent:0,wounds:0,
-    armor:[],weapons:[],cyber:[],gear:[],contacts:[],notes:"",humanityAdj:0,
+    armor:[],weapons:[],cyber:[],gear:[],contacts:[],notes:"",humanityAdj:0,deck:null,programs:[],
     lifepath:{style:{},family:{siblings:[]},motive:{},events:[]},
     lifestyle:{housing:"",rent:0,food:0,other:0}};
 }
@@ -298,7 +298,8 @@ function woundTrackHTML(w,save,opts={}){
 /* ============================== CHARACTER FILES ============================== */
 function normalizeChar(x){const b=blankChar();const c={...b,...clone(x)};
   ["skills","roleChoices","stats","lifestyle","lifepath","ip"].forEach(k=>{if(!c[k]||typeof c[k]!=="object")c[k]=b[k]});
-  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
+  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
+  if(!c.deck||typeof c.deck!=="object"||Array.isArray(c.deck))c.deck=null;
   STAT_KEYS.forEach(k=>{if(typeof c.stats[k]!=="number")c.stats[k]=Number(c.stats[k])||2});
   if(!c.id)c.id=uid();return c}
 

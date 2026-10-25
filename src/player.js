@@ -177,8 +177,8 @@ function newCharBody(){
 /* ============================== SHEET ============================== */
 function viewSheet(c){
   const k=calc(c);const ed=canEditChar(c);const ipAvail=(c.ip?.total||0)-(c.ip?.spent||0);
-  const tabs=[["skills","Skills"],["combat","Combat"],["cyber","Cyberware"],["gear","Gear & cash"],["lifepath","Lifepath"],["notes","Notes"]];
-  const body={skills:tabSkills,combat:tabCombat,cyber:tabCyber,gear:tabGear,lifepath:tabLifepath,notes:tabNotes}[ui.tab]||tabSkills;
+  const tabs=[["skills","Skills"],["combat","Combat"],["cyber","Cyberware"],["gear","Gear & cash"],...(netTabShown(c)?[["net","Netrunning"]]:[]),["lifepath","Lifepath"],["notes","Notes"]];
+  const body={skills:tabSkills,combat:tabCombat,cyber:tabCyber,gear:tabGear,net:tabNet,lifepath:tabLifepath,notes:tabNotes}[ui.tab]||tabSkills;
   return `
   ${c.id==="sample"?`<div class="banner" style="margin-bottom:14px"><span class="chip amber">Example</span> This is a sample character so you can see how the sheet works. Rolls work; edits don't save. <button class="btn sm" data-act="copy-sample">Copy to my roster</button></div>`:""}
   ${rg("hdr",`<header class="sheet-head">
@@ -369,12 +369,14 @@ Object.assign(MODALS,{
   attack:()=>({title:"Attack",body:attackBody()}),
 });
 function shopBody(c){
-  const tabs=["Weapons","Armor","Cyberware","Gear"];const t=ui.shopTab;
+  const tabs=["Weapons","Armor","Cyberware","Gear","Decks","Programs"];const t=ui.shopTab;
   let rows="";
   if(t==="Weapons") rows=WEAPONS.map((w,i)=>shopRow(w[0],`${w[1]} · WA ${sgn(w[2])} · ${w[5]} · ${w[6]?w[6]+" shots · ":""}ROF ${w[7]} · ${w[9]} · ${w[8]} · Avail ${w[4]}`,w[10],"w",i)).join("");
   if(t==="Armor") rows=ARMOR.map((a,i)=>shopRow(a[0],`SP ${a[1]} · ${a[2].map(l=>LOCS.find(x=>x[0]===l)[1]).join(", ")} · EV ${a[3]}`,a[4],"a",i)).join("");
   if(t==="Cyberware"){let last="";rows=CYBER.map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${x[1]}</div>`:"";last=x[1];return head+shopRow(x[0],`HC ${x[3]} (avg ${avgDice(x[3])})`,x[2],"c",i)}).join("")}
   if(t==="Gear") rows=GEAR.map((g,i)=>shopRow(g[0],"",g[1],"g",i)).join("");
+  if(t==="Decks") rows=DECKS.map((x,i)=>shopRow(x[0],`${DECK_TYPES[x[1]]||x[1]} · Speed ${sgn(x[2])} · Data walls ${x[3]} · ${x[4]} MU${c.deck?" · replaces your deck":""}`,x[5],"d",i)).join("");
+  if(t==="Programs"){let last="";rows=SHOP_LISTS.p().map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${esc(x[1])}</div>`:"";last=x[1];return head+shopRow(x[0],`STR ${x[2]} · ${x[3]} MU`,x[4],"p",i)}).join("")}
   return `<div style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><div class="seg">${tabs.map(x=>`<button class="${t===x?"on":""}" data-act="shop-tab" data-t="${x}">${x}</button>`).join("")}</div><span class="mono">Cash: <b>${fmtEb(c.eb)}</b></span></div>
     <div class="row"><label class="row" style="gap:6px"><input type="checkbox" data-act-change="shop-free" ${ui.shopFree?"checked":""}> Add without paying (loot, gifts, GM fiat)</label>

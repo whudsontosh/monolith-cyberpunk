@@ -26,10 +26,11 @@ function npcCalc(n){const eff={...n.stats};const w=clamp(Number(n.wounds)||0,0,4
 function npcSP(n,loc){return Math.max(0,(Number(n.armor?.[loc])||0)-(n.armorDmg?.[loc]||0))}
 
 Object.assign(ui,{npcSel:null,npcSearch:"",dmg:{},addCount:1,quick:{name:"",REF:6,BODY:6,sp:0}});
-function cpCampaignDefaults(){return {gmNotes:{},npcs:[],encounter:{round:1,turn:0,list:[]},lastAward:null,packs:[],shop:null}}
+function cpCampaignDefaults(){return {gmNotes:{},npcs:[],encounter:{round:1,turn:0,list:[]},lastAward:null,packs:[],shop:null,net:{forts:[],run:null}}}
 function cpCampaignNormalize(out,d0){out.encounter={...d0.encounter,...(out.encounter||{})};if(!Array.isArray(out.encounter.list))out.encounter.list=[];
-  if(!Array.isArray(out.npcs))out.npcs=[];if(!out.gmNotes||typeof out.gmNotes!=="object")out.gmNotes={};if(!Array.isArray(out.packs))out.packs=[]}
-function gmSummaryCp(d0){return `${(d0.party||[]).length} runners · ${(d0.npcs||[]).length} custom NPCs · ${(d0.encounter?.list||[]).length} in encounter · ${(d0.campaign?.sessions||[]).length} sessions`}
+  if(!Array.isArray(out.npcs))out.npcs=[];if(!out.gmNotes||typeof out.gmNotes!=="object")out.gmNotes={};if(!Array.isArray(out.packs))out.packs=[];
+  if(!out.net||typeof out.net!=="object")out.net={forts:[],run:null};if(!Array.isArray(out.net.forts))out.net.forts=[];if(out.net.run&&typeof out.net.run!=="object")out.net.run=null}
+function gmSummaryCp(d0){const nf=(d0.net&&d0.net.forts||[]).length;return `${(d0.party||[]).length} runners · ${(d0.npcs||[]).length} custom NPCs · ${(d0.encounter?.list||[]).length} in encounter${nf?` · ${nf} data fortress${nf===1?"":"es"}`:""} · ${(d0.campaign?.sessions||[]).length} sessions`}
 function allNpcs(){return [...st.npcs,...NPC_TEMPLATES.map(t=>({...t,template:true}))]}
 function findNpc(id){return st.npcs.find(n=>n.id===id)||NPC_TEMPLATES.find(t=>t.id===id)||null}
 

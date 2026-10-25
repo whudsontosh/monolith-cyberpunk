@@ -10,7 +10,8 @@ function cpCard(c){const k=calc(c);const draft=!c.created;
     meter:{frac:k.humMax?k.humanity/k.humMax:0,title:`Humanity ${k.humanity}/${k.humMax}`},draft,openLabel:draft?"Continue build":"Open sheet",
     actions:c.id==="sample"?"":`<button class="btn sm ghost" data-act="print-char" data-id="${esc(c.id)}">Paper sheet</button>`,corner:fmtEb(c.eb)}}
 function cpSummary(d0){try{const k=calc(d0);return `${woundLabel(k.level)} · ${fmtEb(d0.eb)} · IP ${(d0.ip?.total||0)-(d0.ip?.spent||0)} free · ${(d0.weapons||[]).length} weapons · ${(d0.cyber||[]).length} implants`}catch(e){return ""}}
-function cpCopy(src){const c=clone(src);c.handle=src.handle+" (copy)";["weapons","armor","cyber","gear","contacts"].forEach(l=>(c[l]||[]).forEach(x=>x.id=uid()));return c}
+function cpCopy(src){const c=clone(src);c.handle=src.handle+" (copy)";["weapons","armor","cyber","gear","contacts"].forEach(l=>(c[l]||[]).forEach(x=>x.id=uid()));
+  const ids={};(c.programs||[]).forEach(p=>{const n=uid();ids[p.id]=n;p.id=n});(c.programs||[]).forEach(p=>{if(p.in)p.in=ids[p.in]||null});if(c.deck)c.deck.id=uid();return c}
 
 /* ---------- GM: map tokens and the encounter ---------- */
 function cpTokenRing(t){
@@ -68,6 +69,7 @@ Monolith.registerGame({
       summaryHint:"The crew owes Malachi 5,000eb and Arasaka wants the datachip back.",
       tabs:[
         {id:"encounter",order:20,label:()=>`Encounter${st.encounter.list.length?" · "+st.encounter.list.length:""}`,view:()=>viewEncounter()},
+        {id:"net",order:35,label:()=>`Netrunning${netRun()?" · live":""}`,view:()=>viewNet()},
         {id:"npcs",order:40,label:()=>"NPCs",view:()=>viewNpcs()},
         {id:"homebrew",order:50,label:()=>"Homebrew",view:()=>viewHomebrew()},
         {id:"reference",order:70,label:()=>"Rules ref",view:()=>viewReference()},
@@ -77,7 +79,8 @@ Monolith.registerGame({
       campaignsActions:()=>cpCampaignsActions(), mapSideExtra:()=>cpMapSideShop(),
       tokenRing:cpTokenRing, activeTurn:cpActiveTurn, tokenInfo:cpTokenInfo, tokenButtons:cpTokenButtons,
       onRemoveCharacter:cpRemoveCharacter, removeNotes:cpRemoveNotes,
-      onPeek:conn=>sendRules(conn,true), onJoined:conn=>sendRules(conn,false),
+      onPeek:conn=>sendRules(conn,true), onJoined:conn=>{sendRules(conn,false);netJoined(conn)},
+      onMessage:(conn,info,type,m)=>cpGmMessage(conn,info,type,m),
       boot:()=>{gmPacksInit();cpSkillNames()},
     },
   }},

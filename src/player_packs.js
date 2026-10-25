@@ -58,7 +58,9 @@ function packContentsHTML(p){const sec=(t,l,f)=>l.length?`<div><span class="labe
     ${sec("Weapons",p.weapons,w=>`<div><b>${esc(w.name)}</b> <span class="faint">· ${esc(w.dmg)} · ${fmtEb(w.cost)}</span></div>`)}
     ${sec("Armor",p.armor,a=>`<div><b>${esc(a.name)}</b> <span class="faint">· SP ${a.sp} · ${fmtEb(a.cost)}</span></div>`)}
     ${sec("Cyberware",p.cyber,x=>`<div><b>${esc(x.name)}</b> <span class="faint">· HC ${esc(x.hc)} · ${fmtEb(x.cost)}</span></div>`)}
-    ${sec("Gear",p.gear,g=>`<div><b>${esc(g.name)}</b> <span class="faint">· ${fmtEb(g.cost)}</span></div>`)}</div>`}
+    ${sec("Gear",p.gear,g=>`<div><b>${esc(g.name)}</b> <span class="faint">· ${fmtEb(g.cost)}</span></div>`)}
+    ${sec("Decks",p.decks||[],x=>`<div><b>${esc(x.name)}</b> <span class="faint">· Speed ${sgn(x.speed)} · walls ${x.wall} · ${x.mu} MU · ${fmtEb(x.cost)}</span></div>`)}
+    ${sec("Programs & ICE",p.programs||[],x=>`<div><b>${esc(x.name)}</b> <span class="faint">· ${x.ice?"ICE · ":""}${esc(x.cls)} · STR ${x.str} · ${x.mu} MU${x.ice?"":" · "+fmtEb(x.cost)}</span>${x.desc?`<div class="faint" style="font-size:12.5px">${esc(x.desc)}</div>`:""}</div>`)}</div>`}
 MODALS.homebrew=()=>({title:"Homebrew",body:homebrewBody()});
 function cpNavExtra(){return `<button data-act="open-modal" data-m="homebrew">Homebrew${installedPacks().length?` · ${installedPacks().length}`:""}</button><button data-act="print-blank">Blank sheet</button>`}
 Object.assign(A,{

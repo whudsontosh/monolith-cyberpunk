@@ -65,6 +65,7 @@ const CYBER_NOTES={
  "Biomonitor":"Under-skin readout of pulse, temperature, blood sugar and more. Warns you about poisons, drugs or bleeding.",
  "Neural processor":"The base implant that all other neuralware plugs into. Install it before any other neuralware.",
  "Interface plugs":"Sockets that let you jack straight into cyberdecks, smartguns, vehicles and machines. Every Netrunner needs them.",
+ "Cybermodem link":"A neural co-processor that translates a cybermodem's signals into your own neural code, so you can run a cyberdeck directly. Needs interface plugs.",
  "Kerenzikov boost +1":"Speeds up your reflexes all the time: +1 to every initiative roll. (The sheet adds it for you.)",
  "Kerenzikov boost +2":"Speeds up your reflexes all the time: +2 to every initiative roll. (The sheet adds it for you.)",
  "Sandevistan speedware +3":"Switch it on for a fight: +3 to initiative while it runs (a few turns), then it needs time to recharge. (The sheet adds the +3.)",

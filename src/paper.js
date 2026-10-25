@@ -142,7 +142,17 @@ function sheetPages(c,o){
       <div class="pp-sec" style="flex:1"><h3>Notes</h3><div class="pp-body pp-lines">${Array.from({length:Math.max(14,noteLines.length)},(_,i)=>`<div>${esc(noteLines[i]||"")}</div>`).join("")}</div></div>
       ${foot(3)}</div>`;
   }
-  return p1+p2+p3;
+  let p4="";
+  if(B?o.deck:(o.deck!==false&&(c.deck||(c.programs||[]).length))){const dk=B?{}:(c.deck||{});const used=B?"":muUsed(c);
+    const pRows=B?[]:(c.programs||[]).map(p=>`<tr><td>${esc(p.in?progLabelPaper(c,p):p.name)}</td><td>${esc(p.cls)}</td><td class="n">${esc(p.str)}</td><td class="n">${esc(p.mu)}</td><td>${p.in?"Demon":p.loaded?"Deck":"Chip"}</td><td class="n">${fmtEb(p.cost)}</td></tr>`);
+    const conn=B?"":(["cyberlimb","cellimb"].includes(dk.type)?"Hardwired":(CONN[dk.conn]||CONN.plugs).label);
+    p4=`<div class="page">
+      <div class="pp-sec"><h3>Cyberdeck</h3><div class="pp-body"><dl class="pp-dl"><dt>Model</dt><dd>${v(dk.name)}</dd><dt>Kind</dt><dd>${B?"Table · Portable · Combat · Cellular · Cyberlimb":esc(DECK_TYPES[dk.type]||"")}</dd><dt>Speed</dt><dd>${B?"":sgn(Number(dk.speed)||0)}</dd><dt>Data walls</dt><dd>${v(dk.wall)}</dd><dt>Memory</dt><dd>${B?"":`${used} / ${esc(dk.mu)} MU`}</dd><dt>Connection</dt><dd>${conn}</dd><dt>Options</dt><dd>${B?"":esc((dk.opts||[]).join(", "))}${!B&&dk.chips?` · ${esc(dk.chips)} chips`:""}</dd><dt>Net initiative</dt><dd>${B?"REF + Speed + 1D10":`${netInitParts(c,k).base} + 1D10`}</dd><dt>Interface</dt><dd>${B?"":skillLevel(c,"Interface")}</dd></dl></div></div>
+      <div class="pp-sec"><h3>Programs</h3><div class="pp-body"><table class="pt"><tr><th style="width:38%">Program</th><th>Class</th><th>STR</th><th>MU</th><th>Where</th><th>Cost</th></tr>${padRows(pRows,22,6)}</table></div></div>
+      <div class="pp-sec"><h3>Net rolls</h3><div class="pp-body"><dl class="pp-dl"><dt>Walls, gates, anti-system</dt><dd>Program STR + 1D10 vs wall or gate STR + 1D10</dd><dt>Stealth & detection</dt><dd>STR + 1D10 vs STR + 1D10</dd><dt>Anti-personnel</dt><dd>STR + INT + Interface + 1D10, both sides</dd><dt>Controllers, utilities</dt><dd>1D10 ≤ STR · Log off: 1D10 ≤ 8</dd></dl></div></div>
+      ${foot(p3?4:3)}</div>`}
+  return p1+p2+p3+p4;
 }
-function printCharacter(c){Print.open({css:PAPER_CSS,title:`Paper sheet · ${c.handle||"Unnamed"}`,options:[{key:"allSkills",label:"All skills (paper style)",def:true},{key:"state",label:"Current wounds, cash & ammo",def:true},{key:"lifepath",label:"Lifepath & notes page",def:true}],render:o=>sheetPages(c,o)})}
-function printBlank(){Print.open({css:PAPER_CSS,title:"Blank character sheet",options:[{key:"lifepath",label:"Lifepath & notes page",def:true}],render:o=>sheetPages(blankChar(),{...o,blank:true,allSkills:true})})}
+function progLabelPaper(c,p){const d0=(c.programs||[]).find(x=>x.id===p.in);return d0?`${d0.name} › ${p.name}`:p.name}
+function printCharacter(c){Print.open({css:PAPER_CSS,title:`Paper sheet · ${c.handle||"Unnamed"}`,options:[{key:"allSkills",label:"All skills (paper style)",def:true},{key:"state",label:"Current wounds, cash & ammo",def:true},{key:"lifepath",label:"Lifepath & notes page",def:true},...((c.deck||(c.programs||[]).length)?[{key:"deck",label:"Cyberdeck & programs page",def:true}]:[])],render:o=>sheetPages(c,o)})}
+function printBlank(){Print.open({css:PAPER_CSS,title:"Blank character sheet",options:[{key:"lifepath",label:"Lifepath & notes page",def:true},{key:"deck",label:"Cyberdeck & programs page",def:false}],render:o=>sheetPages(blankChar(),{...o,blank:true,allSkills:true})})}

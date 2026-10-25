@@ -91,6 +91,7 @@ const SHEET_TIPS={
   cyber:`<b>Humanity</b> is your grip on being human. Every implant costs some; each 10 points lost lowers EMP by 1, and at EMP 0 you go cyberpsycho. Therapy, arranged with the GM, can win some back.`,
   gear:`Track your cash here. Rent, food and other lifestyle costs come due every month; <b>Pay this month</b> takes them off in one go.`,
   lifepath:`Your backstory. Enemies and friends make good story hooks, so tell your GM about them.`,
+  net:`Your <b>cyberdeck</b> holds your programs: its <b>Speed</b> adds to Net initiative (REF + Speed + 1D10), its <b>data walls</b> are its armour, and its <b>memory</b> limits how many programs you can load. Programs on chips stay home. Most program rolls are the program's <b>Strength + 1D10</b> against the target's Strength + 1D10; anti-personnel attacks add <b>INT + Interface</b> on both sides. In a run, your GM jacks you in and you play it from the <b>Net</b> window at the table.`,
   notes:`<b>Contacts</b> are people you can call on for help, gear or information. Keep notes on jobs, debts and secrets.`,
 };
 const SIDE_TIPS={
