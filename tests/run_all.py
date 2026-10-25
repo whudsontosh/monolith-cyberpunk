@@ -12,7 +12,7 @@ for s in SUITES:
         failed.append(s)
         # on GitHub, failures become annotations, which can be read without the full log
         if CI:
-            L=r.stdout.splitlines();bad=[l for l in L if l.startswith("FAIL") or "Error" in l or l.startswith("  File")][:14] or L[-6:]
+            L=r.stdout.splitlines();bad=[l for l in L if l.startswith("FAIL") or "Error" in l][:8]+[l for l in L if l.startswith("  File") and "/tests/" in l][:4] or L[-6:]
             for l in bad:print(f"::error title={s}::{l[:300]}")
     print(f"({time.time()-t:.0f}s)")
 print("\nALL PASSED" if not failed else "\nFAILED: "+", ".join(failed))
