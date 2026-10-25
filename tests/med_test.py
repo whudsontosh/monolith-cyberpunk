@@ -6,8 +6,9 @@ from harness import *
 
 SHOTS=os.path.join(OUT,"med");os.makedirs(SHOTS,exist_ok=True)
 def shot(n):return os.path.join(SHOTS,n)
-# rig the dice: each [sides, value] is the next d(sides); after that, rolls come up in the middle
-RIG="window.__mr=window.__mr||Math.random;window.rig=l=>{const q=l.map(([n,v])=>(v-0.5)/n);Math.random=()=>/\\buid\\b/.test(new Error().stack)?window.__mr():q.length?q.shift():0.45};0"
+# rig the dice: each [sides, value] is the next d(sides); after that, rolls come up in the middle.
+# Only d() draws from the queue, so ids and anything else random can't eat a rigged roll.
+RIG="window.__mr=window.__mr||Math.random;window.rig=l=>{const q=l.map(([n,v])=>(v-0.5)/n);Math.random=()=>{if(!/at d \\(/.test(new Error().stack))return window.__mr();return q.length?q.shift():0.45}};0"
 async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch()

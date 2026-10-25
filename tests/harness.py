@@ -32,6 +32,8 @@ async def page(b,name,url,viewport=None,shim=True):
     ctx=await b.new_context(viewport=viewport or {"width":1440,"height":900})
     if shim: await ctx.add_init_script(SHIM)
     pg=await ctx.new_page()
+    if os.environ.get('CPU_SLOW'):
+        cdp=await ctx.new_cdp_session(pg);await cdp.send('Emulation.setCPUThrottlingRate',{'rate':float(os.environ['CPU_SLOW'])})
     pg.on("pageerror",lambda e:errs.append(name+": "+str(e)))
     pg.on("console",lambda m:errs.append(name+" console: "+m.text) if m.type=="error" and "ERR_" not in m.text else None)
     await pg.goto(APP+url);await pg.wait_for_function("()=>typeof GAME!=='undefined'&&!!GAME&&document.querySelector('#app').children.length>0",timeout=8000)
