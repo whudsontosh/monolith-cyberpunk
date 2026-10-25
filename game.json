@@ -1,0 +1,13 @@
+{
+  "format": "monolith-game",
+  "id": "cyberpunk",
+  "name": "Cyberpunk",
+  "version": "1.0.0",
+  "api": 1,
+  "minMonolith": "1.0.0",
+  "tagline": "Night City Dossier: build runners, run the GM console and play on the map table.",
+  "rulesets": [{ "id": "cp2020", "name": "Cyberpunk 2020" }],
+  "entry": { "player": ["player.js"], "gm": ["gm.js"] },
+  "css": ["skin.css"],
+  "skin": "cyberpunk"
+}
