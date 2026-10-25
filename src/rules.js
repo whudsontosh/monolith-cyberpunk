@@ -113,15 +113,15 @@ const ARMOR=[
  ["Door gunner's vest",25,["torso"],3,250],
  ["MetalGear suit",25,LOC_KEYS,2,600],
 ];
-// name, category, cost, HC dice, extra
+// name, category, cost, HC dice, extra. Prices, Humanity costs and surgery codes (surg) from the book's cyberware list.
 const CYBER=[
- ["Light tattoo","Fashionware",40,"1",{}],["Shift-tacts","Fashionware",400,"1",{}],["Skinwatch","Fashionware",100,"1",{}],["Techhair","Fashionware",200,"1",{}],["Biomonitor","Fashionware",700,"2",{}],
- ["Neural processor","Neuralware",1000,"1D6",{}],["Interface plugs","Neuralware",200,"1D6",{}],["Kerenzikov boost +1","Neuralware",500,"1D6",{init:1}],["Kerenzikov boost +2","Neuralware",1000,"1D6",{init:2}],["Sandevistan speedware +3","Neuralware",1600,"1D6",{init:3}],["Pain editor","Neuralware",200,"2D6",{}],["Tactile boost","Neuralware",100,"1D6/2",{}],["Olfactory boost","Neuralware",200,"1D6/2",{}],["Chipware socket","Neuralware",200,"1D6/2",{}],["Cybermodem link","Neuralware",100,"1",{}],["Vehicle link","Neuralware",100,"1D6/2",{}],["Smartgun link","Neuralware",100,"1D6/2",{smart:1}],
- ["Cyberoptic (one eye)","Cyberoptics",500,"1D6",{}],["Low-lite","Cyberoptics",200,"1",{}],["Infrared","Cyberoptics",500,"1D6/2",{}],["Targeting scope","Cyberoptics",300,"1D6/2",{}],["Times Square marquee","Cyberoptics",300,"1",{}],["Anti-dazzle","Cyberoptics",200,"1",{}],["Teleoptics","Cyberoptics",150,"1",{}],["Image enhancement","Cyberoptics",300,"1D6/2",{}],
- ["Cyberaudio suite","Cyberaudio",500,"1D6",{}],["Radio link","Cyberaudio",100,"1",{}],["Phone splice","Cyberaudio",300,"1",{}],["Amplified hearing","Cyberaudio",200,"1",{}],["Level damper","Cyberaudio",200,"1",{}],["Voice stress analyzer","Cyberaudio",200,"1D6/2",{}],
- ["Nasal filters","Implants",200,"1",{}],["Toxin binders","Implants",200,"1",{}],["Enhanced antibodies","Implants",300,"1",{}],["Contraceptive implant","Implants",100,"0",{}],["Grafted muscle (+1 BODY)","Implants",1000,"2D6",{mods:{BODY:1}}],["Muscle & bone lace (+2 BODY)","Implants",1500,"2D6",{mods:{BODY:2}}],["Skinweave (SP 12)","Implants",2000,"2D6",{armor:{sp:12,locs:LOC_KEYS}}],["Subdermal armor (SP 18 torso)","Implants",1200,"2D6",{armor:{sp:18,locs:["torso"]}}],
- ["Big knucks (1D6+2)","Cyberweapons",100,"1D6/2",{}],["Scratchers (1D6/2)","Cyberweapons",100,"1",{}],["Rippers (1D6+3)","Cyberweapons",400,"1D6",{}],["Wolvers (3D6)","Cyberweapons",600,"2D6",{}],["Slice-n-dice (2D6)","Cyberweapons",700,"2D6",{}],["Fangs (1D6/2)","Cyberweapons",200,"1D6/2",{}],
- ["Cyberhand","Cyberlimbs",1500,"1D6",{}],["Cyberleg","Cyberlimbs",2000,"2D6",{}],["Cyberarm","Cyberlimbs",3000,"2D6",{}],["Hydraulic rams","Cyberlimbs",500,"1D6/2",{}],["Pop-up gun in limb","Cyberlimbs",400,"1D6/2",{}],
+ ["Light tattoo","Fashionware",20,"0.5",{surg:"N"}],["Shift-tacts","Fashionware",200,"0.5",{surg:"N"}],["Skinwatch","Fashionware",50,"1",{surg:"N"}],["Techhair","Fashionware",200,"2",{surg:"M"}],["Biomonitor","Fashionware",100,"1",{surg:"N"}],
+ ["Neural processor","Neuralware",1000,"1D6",{surg:"M"}],["Interface plugs","Neuralware",200,"1D6",{surg:"M"}],["Kerenzikov boost +1","Neuralware",500,"1D6",{init:1,surg:"N"}],["Kerenzikov boost +2","Neuralware",1000,"2D6",{init:2,surg:"N"}],["Sandevistan speedware +3","Neuralware",1600,"1D6/2",{init:3,surg:"N"}],["Pain editor","Neuralware",200,"2D6",{surg:"N"}],["Tactile boost","Neuralware",100,"2",{surg:"N"}],["Olfactory boost","Neuralware",100,"2",{surg:"N"}],["Chipware socket","Neuralware",200,"1D6/2",{surg:"N"}],["Cybermodem link","Neuralware",100,"1",{surg:"N"}],["Vehicle link","Neuralware",100,"3",{surg:"N"}],["Smartgun link","Neuralware",100,"2",{smart:1,surg:"N"}],
+ ["Cyberoptic (one eye)","Cyberoptics",500,"2D6",{surg:"MA"}],["Low-lite","Cyberoptics",200,"0.5",{surg:"N"}],["Infrared","Cyberoptics",200,"1",{surg:"N"}],["Targeting scope","Cyberoptics",400,"2",{surg:"N"}],["Times Square marquee","Cyberoptics",300,"1",{surg:"N"}],["Anti-dazzle","Cyberoptics",200,"0.5",{surg:"N"}],["Teleoptics","Cyberoptics",150,"0.5",{surg:"N"}],["Image enhancement","Cyberoptics",300,"1",{surg:"N"}],
+ ["Cyberaudio suite","Cyberaudio",500,"2D6",{surg:"M"}],["Radio link","Cyberaudio",100,"1",{surg:"N"}],["Phone splice","Cyberaudio",150,"1",{surg:"N"}],["Amplified hearing","Cyberaudio",200,"1",{surg:"N"}],["Level damper","Cyberaudio",300,"0.5",{surg:"N"}],["Voice stress analyzer","Cyberaudio",200,"1",{surg:"N"}],
+ ["Nasal filters","Implants",60,"2",{surg:"M"}],["Toxin binders","Implants",3000,"1D6/2",{surg:"N"}],["Enhanced antibodies","Implants",3000,"1D6/2",{surg:"N",heal:1}],["Nanosurgeons","Implants",6000,"1D6/2",{surg:"N",healx:2}],["Contraceptive implant","Implants",100,"0.5",{surg:"N"}],["Grafted muscle (+1 BODY)","Implants",1000,"2D6",{mods:{BODY:1},surg:"MA"}],["Muscle & bone lace (+2 BODY)","Implants",1500,"1D6/2",{mods:{BODY:2},surg:"N"}],["Skinweave (SP 12)","Implants",2000,"2D6",{armor:{sp:12,locs:LOC_KEYS},surg:"N"}],["Subdermal armor (SP 18 torso)","Implants",1200,"2D6",{armor:{sp:18,locs:["torso"]},surg:"CR"}],
+ ["Big knucks (1D6+2)","Cyberweapons",500,"3D6",{surg:"M"}],["Scratchers (1D6/2)","Cyberweapons",100,"2D6",{surg:"N"}],["Rippers (1D6+3)","Cyberweapons",400,"3D6",{surg:"M"}],["Wolvers (3D6)","Cyberweapons",600,"3D6+1",{surg:"M"}],["Slice-n-dice (2D6)","Cyberweapons",700,"3D6",{surg:"M"}],["Fangs (1D6/2)","Cyberweapons",200,"3D6",{surg:"N"}],
+ ["Cyberhand","Cyberlimbs",150,"0",{surg:"N"}],["Cyberleg","Cyberlimbs",2000,"2D6",{surg:"CR"}],["Cyberarm","Cyberlimbs",3000,"2D6",{surg:"CR"}],["Hydraulic rams","Cyberlimbs",200,"3",{surg:"N"}],["Pop-up gun in limb","Cyberlimbs",400,"1D6/2",{surg:"N"}],
 ];
 const GEAR=[
  ["Pocket computer",100],["Cellular phone",400],["Pocket TV",200],["Flashlight",2],["Binoglasses",200],["Techtool kit",100],["Electronics tool kit",100],["Medkit",50],["Trauma kit",100],
@@ -209,6 +209,10 @@ function spAt(c,loc){
 function calc(c){
   const base={...c.stats};
   const mods={};(c.cyber||[]).forEach(cy=>{for(const [k,v] of Object.entries(cy.mods||{}))mods[k]=(mods[k]||0)+Number(v||0)});
+  // drugs and other effects running now (c.fx), and stat points lost for good (c.statLoss)
+  (c.fx||[]).forEach(f=>{for(const [k,v] of Object.entries(f.mods||{}))mods[k]=(mods[k]||0)+Number(v||0)});
+  for(const [k,v] of Object.entries(c.statLoss||{}))mods[k]=(mods[k]||0)-Number(v||0);
+  const fxStun=(c.fx||[]).reduce((a,f)=>a+(Number(f.stun)||0),0);
   const ev=(c.armor||[]).filter(a=>a.worn).reduce((a,x)=>a+(Number(x.ev)||0),0);
   const hcLoss=(c.cyber||[]).reduce((a,x)=>a+(Number(x.hcLoss)||0),0);
   const humMax=(base.EMP||0)*10;
@@ -216,7 +220,7 @@ function calc(c){
   const w=clamp(Number(c.wounds)||0,0,40);
   const level=Math.ceil(w/4); // 0 none, 1 light ... 10 mortal6
   const eff={};
-  STAT_KEYS.forEach(k=>eff[k]=(base[k]||0)+(mods[k]||0));
+  STAT_KEYS.forEach(k=>eff[k]=Math.max(0,(base[k]||0)+(mods[k]||0)));
   eff.EMP=Math.max(0,Math.min(eff.EMP,Math.ceil(humanity/10)));
   eff.REF=Math.max(0,eff.REF-ev);
   eff.LUCK=Math.max(0,eff.LUCK-(Number(c.luckSpent)||0));
@@ -227,7 +231,7 @@ function calc(c){
   const init=(c.cyber||[]).reduce((a,x)=>a+(Number(x.init)||0),0);
   return {base,eff,mods,ev,hcLoss,humMax,humanity,level,w,
     btm:btmFor(body),save:body,run:eff.MA*3,leap:Math.floor(eff.MA*3/4),lift:body*40,carry:body*10,
-    stunSave:level?body-(level-1):body,deathSave:level>=4?body-(level-4):null,
+    stunSave:(level?body-(level-1):body)+fxStun,fxStun,deathSave:level>=4?body-(level-4):null,
     init,smart:(c.cyber||[]).some(x=>x.smart),melee:meleeBonus(body)};
 }
 function woundLabel(level){return level?WOUND_LEVELS[level-1]:"Uninjured"}
@@ -380,8 +384,9 @@ function hitSP(sp,{ap,mono,hard,cover}={}){let s=Number(sp)||0;if(mono)s=Math.fl
 /* ============================== CHARACTER FILES ============================== */
 function normalizeChar(x){const b=blankChar();const c={...b,...clone(x)};
   ["skills","roleChoices","stats","lifestyle","lifepath","ip"].forEach(k=>{if(!c[k]||typeof c[k]!=="object")c[k]=b[k]});
-  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
+  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs","fx","drugsMade"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
   if(!c.deck||typeof c.deck!=="object"||Array.isArray(c.deck))c.deck=null;
+  ["med","statLoss"].forEach(k=>{if(c[k]!=null&&(typeof c[k]!=="object"||Array.isArray(c[k])))c[k]={}});
   STAT_KEYS.forEach(k=>{if(typeof c.stats[k]!=="number")c.stats[k]=Number(c.stats[k])||2});
   if(!c.id)c.id=uid();return c}
 

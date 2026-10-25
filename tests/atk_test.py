@@ -17,7 +17,7 @@ async def main():
         await pl.click(f".it[data-info='own:weapons:{pis}'] [data-act=atk-open]");await pl.wait_for_timeout(200)
         ok(await pl.evaluate("ui.modal")=="attack" and await pl.evaluate("ui.atk.wid")==pis,"Attack… on a weapon opens the window with it picked")
         await pl.screenshot(path=SP2+"atk-1.png")
-        exp=await pl.evaluate(f"(()=>{{const c=curChar(),k=calc(c),w=c.weapons.find(x=>x.id==='{pis}');return k.eff.REF+skillLevel(c,'Handgun')+Number(w.wa)+(k.smart?2:0)+(atkHasScope(c)?1:0)}})()")
+        exp=await pl.evaluate(f"(()=>{{const c=curChar(),k=calc(c),w=c.weapons.find(x=>x.id==='{pis}');return k.eff.REF+skillLevel(c,'Handgun')+Number(w.wa)+(k.smart?2:0)+(k.smart&&atkHasScope(c)?1:0)}})()")
         ok(("%d + d10"%exp) in (await pl.inner_text(".ck-go")).lower(),"to-hit total matches the sheet (%d)"%exp)
         a0=await pl.evaluate(f"curChar().weapons.find(x=>x.id==='{pis}').ammo")
         await pl.evaluate("window.__d=d10x;d10x=()=>[9]")

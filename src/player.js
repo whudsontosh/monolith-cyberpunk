@@ -177,8 +177,8 @@ function newCharBody(){
 /* ============================== SHEET ============================== */
 function viewSheet(c){
   const k=calc(c);const ed=canEditChar(c);const ipAvail=(c.ip?.total||0)-(c.ip?.spent||0);
-  const tabs=[["skills","Skills"],["combat","Combat"],["cyber","Cyberware"],["gear","Gear & cash"],...(netTabShown(c)?[["net","Netrunning"]]:[]),["lifepath","Lifepath"],["notes","Notes"]];
-  const body={skills:tabSkills,combat:tabCombat,cyber:tabCyber,gear:tabGear,net:tabNet,lifepath:tabLifepath,notes:tabNotes}[ui.tab]||tabSkills;
+  const tabs=[["skills","Skills"],["combat","Combat"],["med","Medical"],["cyber","Cyberware"],["gear","Gear & cash"],...(netTabShown(c)?[["net","Netrunning"]]:[]),["lifepath","Lifepath"],["notes","Notes"]];
+  const body={skills:tabSkills,combat:tabCombat,med:tabMed,cyber:tabCyber,gear:tabGear,net:tabNet,lifepath:tabLifepath,notes:tabNotes}[ui.tab]||tabSkills;
   return `
   ${c.id==="sample"?`<div class="banner" style="margin-bottom:14px"><span class="chip amber">Example</span> This is a sample character so you can see how the sheet works. Rolls work; edits don't save. <button class="btn sm" data-act="copy-sample">Copy to my roster</button></div>`:""}
   ${rg("hdr",`<header class="sheet-head">
@@ -202,11 +202,11 @@ function viewSheet(c){
         <div class="row" style="justify-content:space-between;margin-top:10px"><span class="faint" style="font-size:12.5px">Luck spent this session: ${c.luckSpent||0}</span>${ed?`<span class="row" style="gap:4px"><button class="btn sm" data-act="num" data-f="luckSpent" data-d="1">Spend 1 Luck</button><button class="btn sm ghost" data-act="set" data-f="luckSpent" data-v="0">Reset</button></span>`:""}</div>
         ${derivedHTML(c,k)}
       </div></section>`)}
-      ${rg("wounds",`<section class="panel"><div class="panel-h"><h3>Wounds</h3><span class="chip ${woundChipClass(k.level)}">${woundLabel(k.level)} · ${k.w}/40</span></div><div class="panel-b">${guideOn(c)?tip(SIDE_TIPS.wounds,"sm"):""}
+      ${rg("wounds",`<section class="panel"><div class="panel-h"><h3>Wounds</h3><span class="row" style="gap:6px">${(s=>["ok","healing","hurt"].includes(s.id)?"":`<button class="chip ${s.chip} chiplink" data-act="tab" data-t="med">${esc(s.label)}</button>`)(medState(c))}<span class="chip ${woundChipClass(k.level)}">${woundLabel(k.level)} · ${k.w}/40</span></span></div><div class="panel-b">${guideOn(c)?tip(SIDE_TIPS.wounds,"sm"):""}
         <div class="wounds">${WOUND_LEVELS.map((lab,g)=>`<div class="wg ${g>=3?"mortal":""}"><span class="wl">${lab}</span><div class="bx">${[1,2,3,4].map(j=>{const n=g*4+j;return `<button class="${n<=k.w?"f":""}" data-act="wound" data-n="${n}" ${ed?"":"disabled"} aria-label="${n} damage"></button>`}).join("")}</div><span class="ss num">Stun ${k.save-g}</span></div>`).join("")}</div>
-        <div class="wstate"><button class="btn sm" data-act="roll-save" data-t="stun">Stun save ≤ ${k.stunSave}</button>${k.deathSave!=null?`<button class="btn sm danger" data-act="roll-save" data-t="death">Death save ≤ ${k.deathSave}</button>`:""}
+        <div class="wstate"><button class="btn sm" data-act="roll-save" data-t="stun">Stun save ≤ ${k.stunSave}</button>${k.deathSave!=null&&!medStable(c)&&!medOf(c).dead&&!medOf(c).gone?`<button class="btn sm danger" data-act="roll-save" data-t="death">Death save ≤ ${k.deathSave}</button>`:""}
         ${ed?`<span class="row" style="gap:4px;margin-left:auto"><button class="icon-btn" data-act="num" data-f="wounds" data-d="-1" aria-label="Heal 1">−</button><button class="icon-btn" data-act="num" data-f="wounds" data-d="1" aria-label="Take 1">+</button></span>`:""}</div>
-        <p class="faint" style="margin:8px 0 0;font-size:12.5px">${k.level===2?"Serious: −2 REF.":k.level===3?"Critical: REF, INT and COOL halved.":k.level>=4?"Mortal: REF, INT and COOL at one third. Make a death save every turn.":"Each box is one point of damage."}</p>
+        <p class="faint" style="margin:8px 0 0;font-size:12.5px">${k.level===2?"Serious: −2 REF.":k.level===3?"Critical: REF, INT and COOL halved.":k.level>=4?(medStable(c)?"Mortal, but stabilized: REF, INT and COOL at one third.":"Mortal: REF, INT and COOL at one third. Make a death save every turn until someone stabilizes you (Medical tab)."):"Each box is one point of damage."}</p>
       </div></section>`)}
       ${rg("armor",`<section class="panel"><div class="panel-h"><h3>Armor</h3><span class="faint mono" style="font-size:12px">EV ${k.ev?"−"+k.ev+" REF":"0"}</span></div><div class="panel-b">${guideOn(c)?tip(SIDE_TIPS.armor,"sm"):""}
         <div class="locs">${LOCS.map(([key,lab,rng])=>`<div class="loc"><div class="lk"><span>${lab}</span><span>${rng}</span></div><b class="num">${spAt(c,key)}</b></div>`).join("")}</div>
@@ -371,18 +371,19 @@ Object.assign(MODALS,{
   attack:()=>({title:"Attack",body:attackBody()}),
 });
 function shopBody(c){
-  const tabs=["Weapons","Armor","Cyberware","Gear","Decks","Programs"];const t=ui.shopTab;
+  const tabs=["Weapons","Armor","Cyberware","Gear","Drugs","Bodyshop","Decks","Programs"];const t=ui.shopTab;
   let rows="";
   if(t==="Weapons") rows=WEAPONS.map((w,i)=>shopRow(w[0],`${w[1]} · WA ${sgn(w[2])} · ${w[5]} · ${w[6]?w[6]+" shots · ":""}ROF ${w[7]} · ${w[9]} · ${w[8]} · Avail ${w[4]}`,w[10],"w",i)).join("");
   if(t==="Armor") rows=ARMOR.map((a,i)=>shopRow(a[0],`SP ${a[1]} · ${a[2].map(l=>LOCS.find(x=>x[0]===l)[1]).join(", ")} · EV ${a[3]}`,a[4],"a",i)).join("");
-  if(t==="Cyberware"){let last="";rows=CYBER.map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${x[1]}</div>`:"";last=x[1];return head+shopRow(x[0],`HC ${x[3]} (avg ${avgDice(x[3])})`,x[2],"c",i)}).join("")}
+  if(t==="Cyberware"){let last="";rows=CYBER.map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${x[1]}</div>`:"";last=x[1];return head+shopRow(x[0],`HC ${x[3]} (avg ${avgDice(x[3])}) · surgery ${surgOf(x)}`,x[2],"c",i)}).join("")}
   if(t==="Gear") rows=GEAR.map((g,i)=>shopRow(g[0],"",g[1],"g",i)).join("");
+  if(t==="Drugs"||t==="Bodyshop") rows=medShopRows(c,t);
   if(t==="Decks") rows=DECKS.map((x,i)=>shopRow(x[0],`${DECK_TYPES[x[1]]||x[1]} · Speed ${sgn(x[2])} · Data walls ${x[3]} · ${x[4]} MU${c.deck?" · replaces your deck":""}`,x[5],"d",i)).join("");
   if(t==="Programs"){let last="";rows=SHOP_LISTS.p().map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${esc(x[1])}</div>`:"";last=x[1];return head+shopRow(x[0],`STR ${x[2]} · ${x[3]} MU`,x[4],"p",i)}).join("")}
   return `<div style="display:grid;gap:12px">
     <div class="row" style="justify-content:space-between"><div class="seg">${tabs.map(x=>`<button class="${t===x?"on":""}" data-act="shop-tab" data-t="${x}">${x}</button>`).join("")}</div><span class="mono">Cash: <b>${fmtEb(c.eb)}</b></span></div>
     <div class="row"><label class="row" style="gap:6px"><input type="checkbox" data-act-change="shop-free" ${ui.shopFree?"checked":""}> Add without paying (loot, gifts, GM fiat)</label>
-    ${t==="Cyberware"?`<span class="seg" style="margin-left:auto"><button class="${ui.hcMode==="roll"?"on":""}" data-act="hc-mode" data-v="roll">Roll Humanity cost</button><button class="${ui.hcMode==="avg"?"on":""}" data-act="hc-mode" data-v="avg">Use average</button></span>`:""}</div>
+    ${t==="Cyberware"?`<label class="row" style="gap:6px" title="Surgical damage and the surgery fee, by the cyberware's surgery code"><input type="checkbox" data-act-change="shop-surg" ${ui.shopSurg?"checked":""}> Include surgery (damage and fee)</label><span class="seg" style="margin-left:auto"><button class="${ui.hcMode==="roll"?"on":""}" data-act="hc-mode" data-v="roll">Roll Humanity cost</button><button class="${ui.hcMode==="avg"?"on":""}" data-act="hc-mode" data-v="avg">Use average</button></span>`:""}</div>
     <div class="shop-split"><div class="shop-list">${rows}</div><aside class="shop-detail" id="shop-detail" data-keep aria-live="polite"><p class="faint shop-hint">Point at an item, or tap its name, to see exactly what it does for ${esc(c.handle||"this runner")}.</p></aside></div>
     <p class="faint" style="margin:0;font-size:12.5px">Catalog prices and Humanity costs are editable on each item after you add it, so you can match your table's books.</p>
   </div>`;
@@ -428,7 +429,7 @@ Object.assign(A,{
       if(ex){ex.shots=String((Number(ex.shots)||0)+1);ex.ammo=(Number(ex.ammo)||0)+1;item=ex}else{item=mkWeapon(row);c.weapons.push(item)}}
     if(k==="a"){item=mkArmor(ARMOR[i]);cost=ARMOR[i][4];c.armor.push(item)}
     if(k==="g"){const g=GEAR[i];cost=g[1];const ex=c.gear.find(x=>x.name===g[0]);if(ex)ex.qty=(Number(ex.qty)||1)+1;else c.gear.push({id:uid(),name:g[0],qty:1,cost:g[1],notes:""});item={name:g[0]}}
-    if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item)}
+    if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item);if(ui.shopSurg)cost+=medSurgery(c,r)}
     if(!ui.shopFree)c.eb=(Number(c.eb)||0)-cost;
     saveChar(c);renderModal();if(k!=="c")showNotice(`${ui.shopFree?"Added":"Bought"} ${item.name}.`);if(ui.view!=="roster")render();},
   "add-skill":()=>{const n=document.getElementById("ns-name").value.trim();const s=document.getElementById("ns-stat").value;const m=clamp(Number(document.getElementById("ns-mult").value)||1,1,5);
@@ -452,6 +453,7 @@ Object.assign(A,{
   "set":el=>mutate(c=>setPath(c,el.dataset.f,Number(el.dataset.v))),
   "wound":el=>mutate(c=>{const n=Number(el.dataset.n);c.wounds=c.wounds===n?n-1:n}),
   "roll-save":el=>{const c=curChar();const k=calc(c);const t=el.dataset.t;const target=t==="stun"?k.stunSave:k.deathSave;const r=d(10);
+    if(t==="death"&&r>target&&canEditChar(c)){medEnsure(c).dying=true;saveChar(c);render()}
     pushRoll({who:whoName(),label:t==="stun"?`Stun save (need ≤ ${target})`:`Death save (need ≤ ${target})`,detail:`D10 = ${r} → ${r<=target?(t==="stun"?"stays conscious":"survives this turn"):(t==="stun"?"knocked out":"dies")}`,total:r,t:Date.now()})},
   "roll-init":el=>{const fd=el.dataset.fd==="1";checkRoll(fd?"Initiative (fast draw)":"Initiative",Number(el.dataset.b),{area:"none"});const st0=atkState();const set=new Set(st0.sits||[]);if(fd)set.add("fastdraw");else set.delete("fastdraw");st0.sits=[...set];if(fd)showNotice("Fast draw: −3 to hit this round. It's switched on in the Attack window.")},
   "set-range":()=>{},

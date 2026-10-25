@@ -965,3 +965,28 @@ h3.mh{font-size:20px;font-weight:800}
 .atk-area{display:grid;gap:8px;border:1px solid var(--line);padding:10px;background:var(--sunk)}
 .cb-opts select.sm{font-size:12.5px;padding:3px 6px;max-width:220px}
 .enc-tools{gap:8px}
+
+/* ============================== TRAUMA TEAM (1.1.2) ============================== */
+.med-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:1100px){.med-cols{grid-template-columns:minmax(0,1fr)}}
+.med-grid{display:grid;gap:10px}
+.med-state{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.med-p{margin:0;font-size:13.5px}
+.panel-b>.med-p+.med-p,.panel-b>.med-p+.btn,.panel-b>.med-p+.row{margin-top:8px}
+.med-rate{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink2)}
+.med-rate b{color:var(--ink);font-family:var(--f-mono);font-weight:400}
+.med-log{margin:0;padding-left:18px;font-size:12.5px;color:var(--ink2);display:grid;gap:2px}
+.med-fx{display:grid;gap:0}
+.med-fx .it{border-top:1px solid var(--line)}
+.med-dt{display:grid;gap:10px;max-height:340px;overflow:auto}
+.chiplink{cursor:pointer;border-style:solid}
+.lab-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:720px){.lab-cols{grid-template-columns:minmax(0,1fr)}}
+.lab-list{display:grid;gap:2px;max-height:320px;overflow:auto;border:1px solid var(--line);padding:6px 8px;margin-top:6px}
+.lab-opt{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:3px 0;cursor:pointer}
+.lab-opt input{margin-top:3px}
+.lab-opt small{display:block;color:var(--ink3);font-size:12px}
+.lab-sum{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;border:1px solid var(--line);padding:10px 12px;background:var(--sunk)}
+.lab-sum>div{display:grid;gap:2px;align-content:end}
+.lab-sum b{display:block;font-size:26px;line-height:1.1}
+.lab-sum small{color:var(--ink3);font-size:12px}

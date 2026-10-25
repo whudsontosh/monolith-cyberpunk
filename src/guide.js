@@ -88,6 +88,7 @@ function guideStep(step,c){
 const SHEET_TIPS={
   skills:`Tap a stat or a skill's roll button to roll it: <b>stat + skill + 1D10</b>. Pick a <b>Target</b> first and the result tells you whether you beat it. The GM awards <b>Improvement Points</b> (IP) for good play; raising a skill costs its current level × 10 IP, more for ×2 and ×3 skills.`,
   combat:`<b>Initiative</b> is REF + 1D10 (Solos add Combat Sense); highest acts first. <b>Attack</b> is REF + weapon skill + WA + 1D10 against the range number. <b>Damage:</b> roll the weapon's dice, subtract the armor SP where you were hit, double it for head hits, then subtract your BTM. The calculator below does it for you.`,
+  med:`At a <b>Mortal</b> wound you make a death save every turn until someone <b>stabilizes</b> you: their TECH + First Aid or Medical Tech + 1D10 must reach your damage. Then you need <b>treatment</b> to heal: First Aid heals half a point a day, Medical Tech one. Untreated wounds get 2 points worse a day. <b>Time passes</b> moves the days along.`,
   cyber:`<b>Humanity</b> is your grip on being human. Every implant costs some; each 10 points lost lowers EMP by 1, and at EMP 0 you go cyberpsycho. Therapy, arranged with the GM, can win some back.`,
   gear:`Track your cash here. Rent, food and other lifestyle costs come due every month; <b>Pay this month</b> takes them off in one go.`,
   lifepath:`Your backstory. Enemies and friends make good story hooks, so tell your GM about them.`,

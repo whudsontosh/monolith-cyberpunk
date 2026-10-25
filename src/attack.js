@@ -44,7 +44,7 @@ function atkMods(c,w,s){const k=calc(c);const out=[];const skill=atkSkill(c,w);c
   // aiming, scopes and sights don't work on a fast draw or full auto (pg. 98, 106)
   const aiming=!fast&&!auto&&!mel;
   if(aiming&&Number(s.aimTurns))out.push([`Aiming ${s.aimTurns} turn${s.aimTurns>1?"s":""}`,clamp(Number(s.aimTurns),0,3)]);
-  if(aiming&&gun&&atkHasScope(c)&&!sits.has("scope"))out.push(["Targeting scope (cyberoptic)",1]);
+  if(aiming&&gun&&smart&&atkHasScope(c)&&!sits.has("scope"))out.push(["Targeting scope (cyberoptic, smartgun)",1]);
   if(mel&&w.unarmed||mel&&/^Martial Art/.test(skill)){const st=atkStyle(c,skill,s);const mv=s.move||w.move;const b=st&&MA_STYLES[st][1][mv];if(b)out.push([`${st} key attack (${mv})`,b])}
   for(const [id,label,v] of ATK_SITUATIONS){if(!sits.has(id))continue;if(id==="dodging"&&!mel)continue;if(["laser","telescopic","scope","goggles"].includes(id)&&!aiming)continue;
     if(id==="goggles"&&smart)continue;let val=v;if(id==="telescopic")val=dv>=25?2:dv===20?1:0;if(val)out.push([label,val])}

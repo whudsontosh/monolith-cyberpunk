@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.1.2
+
+Trauma Team: the rulebook's medical chapter.
+
+- **Medical tab:** a new sheet tab with the runner's condition, treatment, healing, drugs and Trauma Team.
+- **Stabilization:** a mortally wounded runner makes a death save every turn until someone stabilizes them:
+  TECH + First Aid or Medical Tech + 1D10 against their total damage, +5 in a hospital, +3 in a Trauma Team
+  ambulance or a cryotank. Once stabilized, the death save goes away until they take another wound.
+- **Death and Death State:** a failed death save means dead at the end of the turn. Death State rises by 2
+  a minute; revive with 1D10 over it. At Death State 10 they're gone for good.
+- **Healing:** First Aid (half a point a day) and Medical Tech (1 a day) checks, with speedheal, nanotech,
+  enhanced antibodies and nanosurgeons. Untreated wounds get 2 points worse a day. A Time passes control
+  heals the runner over days, and each wound level's limits while healing are shown.
+- **Trauma Team:** coverage (none, a monthly account or a corporate policy), calling them (1D6+1 minutes),
+  their +3, and the 100eb-a-minute bill.
+- **Drugs:** the book's street drugs (SynthCoke, Stim, Syncomp 15, Speedheal, Boost, Blue Glass, Smash,
+  'Dorph and Black Lace) in the shop. Taking a dose rolls its duration and side effects and changes your
+  stats while it runs. Addictive drugs get hourly craving checks.
+- **Drug lab:** design a drug with the book's effects, Strength, side effects and duration. The app works
+  out its Difficulty and price, and you make it with a Pharmaceuticals check.
+- **Bodyshop:** appearance changes, +1 ATTR sculpts, exotics, body bank and vat-grown parts (with the
+  book's availability roll), body bank storage, Trauma Team accounts and nanotech treatment.
+- **Surgery:** every piece of cyberware has its surgery code. Tick "Include surgery" in the shop and
+  installing it rolls the surgical damage and adds the fee.
+- **Cyberware prices:** the cyberware list now uses the book's prices and Humanity costs. Added Nanosurgeons.
+- **The GM:** each runner's page has the medical panels; Downtime heals the whole party over a number of
+  days; the combat tracker can stabilize anyone with the medic's total; the party list shows who's dying;
+  and the rules reference has the medical, surgery, body bank, bodysculpt and drug tables.
+- The targeting scope now gives its +1 only with smartgun attacks, as the book says.
+
 ## 1.1.1
 
 The rest of Friday Night Firefight, the rulebook's combat chapter.

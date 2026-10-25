@@ -84,7 +84,7 @@ FILE_HANDLERS.push(async list=>{const pk=list.filter(f=>isPackFileName(f.name));
       :shop&&shop.vendor?`<div class="banner shopbanner" style="margin:0;border-style:solid"><span class="chip green">Open</span> <b>${esc(shop.vendor)}</b> is open for business.</div>`:"";
     html=html.replace('<div style="display:grid;gap:12px">','<div style="display:grid;gap:12px">'+banner)}
   return html}}
-{const _row=shopRow;shopRow=function(name,meta,cost,kind,i){const c=curChar();const shop=charShop(c);const list=SHOP_LISTS[kind]();const row=list[i];
+{const _row=shopRow;shopRow=function(name,meta,cost,kind,i){const c=curChar();const shop=charShop(c);const list=SHOP_LISTS[kind]?SHOP_LISTS[kind]():[];const row=list[i];
   if(row&&shopHidden(shop,kind,row[0]))return "";
   const price=row?shopPrice(shop,kind,row):cost;const hb=PACK_SRC[kind]&&PACK_SRC[kind][name];
   let h=_row(name,meta,price,kind,i);
