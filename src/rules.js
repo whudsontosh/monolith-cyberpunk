@@ -77,7 +77,19 @@ const WEAPONS=[
  ["Arasaka Rapid Assault 12","SHT",-1,"N","C","4D6","20","10","ST","50m",900],
  ["Sternmeyer Stakeout 10","SHT",-2,"N","R","4D6","10","2","ST","50m",450],
  ["Barrett-Arasaka Light 20mm","HVY",0,"N","R","4D10","10","1","VR","450m",2000],
- ["Militech Arms RPG-A","HVY",-2,"N","R","6D10","1","1","VR","750m",1500],
+ ["Militech Arms RPG-A","HVY",-2,"N","R","6D10","1","1","VR","750m",7500],
+ ["Scorpion 16 Missile Launcher","HVY",-1,"N","R","7D10","1","1","VR","1000m",3000],
+ ["Kenshiri Adachi F-253 Flamethrower","HVY",-2,"N","R","2D10","10","1","ST","50m",7500],
+ ["Grenade launcher","HVY",0,"L","R","Grenade","","1","ST","225m",150],
+ ["Grenade (fragmentation)","HVY",0,"P","P","7D6","1","1","VR","Thrown",30],
+ ["Grenade (incendiary)","HVY",0,"P","P","4D6","1","1","VR","Thrown",30],
+ ["Grenade (stun)","HVY",0,"P","P","—","1","1","VR","Thrown",30],
+ ["Grenade (dazzle)","HVY",0,"P","P","—","1","1","VR","Thrown",30],
+ ["Grenade (sonic)","HVY",0,"P","P","—","1","1","VR","Thrown",30],
+ ["Grenade (gas)","HVY",0,"P","P","Gas","1","1","VR","Thrown",30],
+ ["C-6 plastic explosive (1kg)","HVY",0,"P","P","8D10","1","1","VR","Placed",100],
+ ["Mine","HVY",0,"J","P","4D10","1","1","VR","Placed",350],
+ ["Molotov cocktail","HVY",0,"J","E","2D10","1","1","VR","Thrown",0],
  ["Knife","MEL",0,"P","C","1D6","","1","VR","1m",30],
  ["Club / bat","MEL",0,"L","C","1D6","","1","VR","1m",10],
  ["Nunchaku","MEL",0,"L","C","3D6","","1","VR","1m",15],
@@ -274,11 +286,11 @@ const EV_CHIP={"Big problem":"red","Big win":"green","Friend":"blue","Enemy":"re
 /* ============================== COMBAT MATH ============================== */
 function rollLocation(){const r=d(10);return {r,loc:r===1?"head":r<=4?"torso":r===5?"rarm":r===6?"larm":r<=8?"rleg":"lleg"}}
 function locName(l){return (LOCS.find(x=>x[0]===l)||[,l])[1]}
-function computeHit({amount,loc,sp,ap,btm}){
-  const name=locName(loc);let s=ap?Math.floor(sp/2):sp;let pen=amount-s;
-  if(pen<=0) return {final:0,text:`${amount} damage vs SP ${s} at the ${name}: stopped by armor. No wounds.`};
-  const steps=[`${amount} − SP ${s} = ${pen}`];
-  if(ap){pen=Math.max(1,Math.floor(pen/2));steps.push(`AP halves → ${pen}`)}
+function computeHit({amount,loc,sp,ap,btm,mono,hard,cover}){
+  const name=locName(loc);let s=hitSP(sp,{ap,mono,hard,cover});let pen=amount-s;const what=[cover?`cover SP ${cover}`:"",mono?"mono-edge":"",ap&&!mono?"AP":""].filter(Boolean).join(", ");
+  if(pen<=0) return {final:0,text:`${amount} damage vs SP ${s}${what?` (${what})`:""} at the ${name}: stopped. No wounds.`};
+  const steps=[`${amount} − SP ${s}${what?` (${what})`:""} = ${pen}`];
+  if(ap&&!mono){pen=Math.max(1,Math.floor(pen/2));steps.push(`AP halves → ${pen}`)}
   if(loc==="head"){pen*=2;steps.push(`head ×2 → ${pen}`)}
   const fin=Math.max(1,pen+btm);steps.push(`BTM ${btm} → ${fin}`);
   let note="";if(fin>8&&loc!=="torso")note=loc==="head"?" Over 8 to the head: instant death unless the GM rules otherwise.":" Over 8 to a limb: severed or crushed. Death save at Mortal 0.";
@@ -294,6 +306,76 @@ function woundTrackHTML(w,save,opts={}){
   return `<div class="wounds">${WOUND_LEVELS.map((lab,g)=>`<div class="wg ${g>=3?"mortal":""}"><span class="wl">${lab}</span><div class="bx">${[1,2,3,4].map(j=>{const n=g*4+j;return `<button class="${n<=w?"f":""}" ${opts.act?`data-act="${opts.act}" data-n="${n}" ${opts.extra||""}`:""} ${opts.disabled?"disabled":""} aria-label="${n} damage"></button>`}).join("")}</div><span class="ss num">Stun ${save-g}</span></div>`).join("")}</div>`;
 }
 
+
+/* ============================== FRIDAY NIGHT FIREFIGHT (1.1.1) ==============================
+   From the rulebook's combat chapter (pg. 96–114) and the fumble table (pg. 42). */
+// Attack modifiers (pg. 99): [id, label, value, group, note]
+const ATK_SITUATIONS=[
+ ["immobile","Target immobile",4,"Target"],["moving10","Target moving, REF over 10",-3,"Target","Only one moving penalty counts"],["moving12","Target moving, REF over 12",-4,"Target"],["moving14","Target moving, REF over 14",-5,"Target"],
+ ["dodging","Target dodging",-2,"Target","Melee only"],["silhouette","Target silhouetted",2,"Target"],["large","Large target",4,"Target"],["small","Small target",-4,"Target"],["tiny","Tiny target",-6,"Target"],
+ ["fastdraw","Fast draw / snapshot",-3,"You","+3 to your initiative; no scopes, sights or aiming"],["ambush","Ambush",5,"You","One attack, on a target who doesn't know you're there"],["twoweapons","Using two weapons",-3,"You","On both weapons"],
+ ["running","Firing while running",-3,"You"],["hip","Firing a shoulder arm from the hip",-2,"You"],["turning","Turning to face the target",-2,"You"],["blinded","Blinded by light or dust",-3,"You"],["ricochet","Ricochet or indirect fire",-5,"You"],
+ ["turret","Turret-mounted weapon",2,"Weapon"],["vehicle","Vehicle-mounted, no turret",-4,"Weapon"],["laser","Laser sight",1,"Weapon"],["telescopic","Telescopic sight",0,"Weapon","+2 at long or extreme range, +1 at medium"],["scope","Targeting scope",1,"Weapon"],["goggles","Smartgoggles",2,"Weapon","With a smartgun"]];
+const MOVING_SITS=["moving10","moving12","moving14"];
+// Common cover SPs (pg. 103)
+const COVER=[["Sheetrock wall",5],["Wood door",5],["Concrete block wall",10],["Car body, door",10],["Heavy wood door",15],["Steel door",20],["Brick wall",25],["Data Term",25],["Mailbox",25],["Curb",25],["Stone wall",30],["Tree, phone pole",30],["Concrete utility pole",35],["Engine block",35],["Hydrant",35],["Armored car body",40],["AV-4 body",40]];
+// Armor in the book's hard armor list (pg. 101); everything else is soft
+const HARD_ARMOR=/metalgear|door gunner|steel helmet|flak|nylon helmet|riot|rpa heavy/i;
+// The fumble table (pg. 42)
+const FUMBLES={
+ combat:{label:"Reflex (combat)",rows:[[4,"No fumble. You just screw up."],[5,"You drop your weapon."],[6,"The weapon discharges (non-automatic weapons: make a reliability roll) or strikes something harmless."],[7,"The weapon jams (non-automatic weapons: make a reliability roll) or imbeds itself in the ground for a turn."],[8,"You manage to wound yourself. Roll for location."],[10,"You manage to wound a member of your own party."]]},
+ athletics:{label:"Reflex (athletics)",rows:[[4,"No fumble. You just mess up and make an idiot of yourself."],[7,"You fail miserably: take 1 point of damage (sprain, fall, stumble) and make a Stun save."],[10,"You fail abysmally: if it was a physical action, take 1D6 damage from a fall or strained muscles, and make a Stun save at −1."]]},
+ tech:{label:"Tech (repair or create)",rows:[[4,"No fumble. You just can't get it together."],[7,"You make it worse: you drop your tools or damage the thing even more. Raise the Difficulty by 5 and try again."],[10,"You blew it: the device or creation is damaged beyond repair. Buy a new one."]]},
+ emp:{label:"EMP (convince, fast talk, seduce)",rows:[[4,"No fumble. They just won't buy it."],[6,"They're left totally cold: −4 to your next EMP roll with them."],[10,"You blew it royally: now they're violently opposed to anything you want. Roll 1D10; on 1–4 they try to do you physical harm."]]},
+ int:{label:"INT (figure out, notice, catch a clue)",rows:[[4,"No fumble. You just don't know how to do it, and carry on oblivious."],[7,"You don't know anything about what's going on or how to handle it. Make a Convince check at −2 to see if anyone notices how dumb you are."],[10,"You're completely oblivious, and everyone knows how ignorant you are."]]}};
+const COMBAT_SKILLS=/^(handgun|submachinegun|rifle|heavy weapons|melee|brawling|fencing|archery|martial art|combat sense)/i;
+function fumbleArea(label){const l=String(label||"");if(/^attack/i.test(l))return "combat";
+  const m=/\((INT|REF|TECH|COOL|ATTR|LUCK|MA|BODY|EMP)\)/.exec(l);const name=l.replace(/\s*\(.*$/,"").replace(/ check$/,"").trim();
+  let stat=m?m[1]:STAT_KEYS.includes(name)?name:(SKILL_BY_NAME[name]||ABILITIES[name]||{}).s;
+  if(!stat&&/^martial art/i.test(name))stat="REF";
+  if(stat==="REF")return COMBAT_SKILLS.test(name)?"combat":"athletics";
+  return {TECH:"tech",EMP:"emp",INT:"int"}[stat]||null}
+function fumbleRoll(area){const t=FUMBLES[area];if(!t)return null;const r=d(10);const row=t.rows.find(x=>r<=x[0]);return {r,area,label:t.label,text:row[1],bad:r>t.rows[0][0]}}
+// Martial arts key attacks (pg. 100): style → [IP difficulty, {move: bonus}]
+const MA_MOVES=["Strike","Kick","Block","Dodge","Throw","Hold","Escape","Choke","Sweep","Grapple"];
+const MA_STYLES={"Karate":[2,{Strike:2,Kick:2,Block:2}],"Judo":[1,{Dodge:1,Throw:3,Hold:2,Escape:2,Sweep:2,Grapple:2}],"Boxing":[1,{Strike:3,Block:3,Dodge:1}],"Thai Boxing":[4,{Strike:3,Kick:3,Block:2,Grapple:1}],
+ "Choi Li Fut":[3,{Strike:2,Kick:2,Block:2,Dodge:1,Throw:1,Sweep:2}],"Aikido":[3,{Block:4,Dodge:3,Throw:3,Hold:3,Escape:3,Choke:1,Sweep:3,Grapple:2}],"Animal Kung Fu":[3,{Strike:2,Kick:2,Block:2,Sweep:1}],
+ "Tae Kwon Do":[4,{Strike:3,Kick:3,Block:2,Dodge:1,Sweep:2}],"Savate":[2,{Kick:4,Block:1,Dodge:1}],"Wrestling":[1,{Throw:3,Hold:4,Escape:4,Choke:2,Sweep:2,Grapple:4}],"Capoeira":[3,{Strike:1,Kick:2,Block:2,Dodge:2,Sweep:3}]};
+function maStyleOf(name){const m=/^Martial Art:\s*(.+)$/i.exec(String(name||""));if(!m)return null;const k=Object.keys(MA_STYLES).find(s=>s.toLowerCase()===m[1].trim().toLowerCase()||(s==="Capoeira"&&/capeoira/i.test(m[1])));return k||null}
+// Unarmed moves (pg. 112): damage, what it needs, what it does
+const UNARMED_MOVES={
+ Strike:{dmg:"1D6/2",dmgMod:true,text:"A punch or hand strike."},Kick:{dmg:"1D6",dmgMod:true,text:"A kick."},
+ Throw:{dmg:"1D6",dmgMod:true,needs:"a Grapple first",text:"They're thrown to the ground and make a Stun save at −2."},
+ Choke:{dmg:"1D6",needs:"a Hold or Grapple first",text:"1D6 damage every turn you keep it on."},
+ Sweep:{text:"They're knocked down: −2 to their next attack, +2 to yours."},Grapple:{text:"You grab them. Next action you can Throw, Choke or Hold."},
+ Hold:{needs:"a Grapple first",text:"A painful joint or body hold: they can't move until they Escape."},Escape:{text:"On a success you're free of a hold and can move."},
+ Disarm:{text:"On a success you knock the weapon out of their hand."},Block:{text:"Block or parry: stop or absorb the damage."},Dodge:{text:"−2 to the attacker's roll this turn; −3 to your other actions."}};
+// Area effects (pg. 99, 107–112)
+const AREA_FX={
+ "Grenade (fragmentation)":{kind:"grenade",area:5,text:"Fragmentation: 7D6 to everything in the blast."},
+ "Grenade (incendiary)":{kind:"grenade",area:5,burn:3,text:"Incendiary: 4D6 to everything in the area, for 3 turns."},
+ "Grenade (stun)":{kind:"grenade",area:5,nodmg:true,text:"Stun: everyone in the area makes a Stun save at −5."},
+ "Grenade (dazzle)":{kind:"grenade",area:5,nodmg:true,text:"Dazzle: everyone in the area is blinded for 4 turns."},
+ "Grenade (sonic)":{kind:"grenade",area:5,nodmg:true,text:"Sonic: everyone in the area is deafened for 4 turns."},
+ "Grenade (gas)":{kind:"gas",area:3,nodmg:true,text:"Gas: everyone within 3m is affected now. Next turn the cloud drifts (roll scatter for the wind) and catches anyone in its path; on the third turn it's gone. Armor doesn't help; filters and gas masks do."},
+ "Grenade launcher":{kind:"launcher",text:"Fires one of your grenades up to 225m."},
+ "C-6 plastic explosive (1kg)":{kind:"explosive",area:5,perUnit:"kg",text:"C-6: 8D10, 5m of blast for every kg. Explosives hit the whole body, not a location."},
+ "Mine":{kind:"mine",area:2,text:"Land mine: 4D10 to whatever sets it off. A claymore throws its blast in an hourglass: 6m wide and 75m long in front, 6m long behind, with a 6m circle at the middle."},
+ "Militech Arms RPG-A":{kind:"rpg",area:4,text:"Rocket-propelled grenade: 6D10 in a 4m radius. The backblast means it can't be fired in a confined space."},
+ "Scorpion 16 Missile Launcher":{kind:"missile",area:6,text:"Missile: 7D10 in a 6m radius. Against an armor-piercing warhead, armor counts at half SP but the damage isn't halved."},
+ "Kenshiri Adachi F-253 Flamethrower":{kind:"flame",area:2,text:"Flame: 2D10 this turn, then 1D10 and 1D6 the next two turns. Hard armor protects normally; soft armor needs more than SP 15 to protect, and loses 2 SP per hit. You can sweep the flame between two points."},
+ "Molotov cocktail":{kind:"molotov",area:2,perUnit:"liter",text:"Molotov: 2D10 to the whole body, 2m for every liter of fuel."}};
+const GAS_TYPES=[["Teargas","Tearing: −2 REF"],["Nausea","Illness: −4 REF"],["Sleep","Sleep (half effect: drowsy, −2 to all stats)"],["Biotoxin I","Death: 4D6"],["Biotoxin II","Death: 8D6"],["Nerve gas","Death: 8D10"]];
+// Grenade scatter (pg. 99): 1D10 for the direction from the target, 1D10 for meters
+const SCATTER_DIR={1:"short (toward you), 2 squares",2:"short and left",3:"short",4:"short and right",5:"left",6:"right",7:"long and left",8:"long (past the target)",9:"long and right",10:"long (past the target), 2 squares"};
+function scatterRoll(){const a=d(10),b=d(10);return {dir:a,m:b,text:`1D10 ${a}: lands ${SCATTER_DIR[a]}, 1D10 ${b}: ${b}m from the target`}}
+// Shotgun patterns (pg. 109)
+function shotgunAt(dv){return dv<=15?{w:1,dmg:"4D6",label:"Close or point blank"}:dv<=20?{w:2,dmg:"3D6",label:"Medium"}:{w:3,dmg:"2D6",label:"Long or extreme"}}
+const isMono=w=>/mono|slice/i.test(String(w&&w.name||""));
+/* SP against a hit: cover combines with armor by the proportional rule (pg. 102); AP halves it;
+   mono-edges count soft armor at 1/3 and hard armor at 2/3 (pg. 113). */
+function hitSP(sp,{ap,mono,hard,cover}={}){let s=Number(sp)||0;if(mono)s=Math.floor(s*(hard?2:1)/3);else if(ap)s=Math.floor(s/2);
+  const cv=Number(cover)||0;if(cv){const hi=Math.max(s,cv),lo=Math.min(s,cv);s=lo?hi+propBonus(hi-lo):hi}return s}
 
 /* ============================== CHARACTER FILES ============================== */
 function normalizeChar(x){const b=blankChar();const c={...b,...clone(x)};
@@ -317,7 +399,8 @@ Dice.check=function(label,base,opts={}){const rolls=d10x();const sum=rolls.reduc
   base=Number(base)||0;const mod=Number(opts.mod)||0,luck=Math.max(0,Number(opts.luck)||0);
   const parts=[String(base)];if(mod)parts.push((mod>0?"+ ":"− ")+Math.abs(mod)+" mod");if(luck)parts.push("+ "+luck+" Luck");
   const e={who:opts.who||this.who(),label,detail:`${parts.join(" ")} + D10 (${rolls.join("+")})${fumble?" · FUMBLE":""}${crit?" · CRITICAL":""}`,total:base+mod+luck+sum,dv:opts.dv?Number(opts.dv):null,crit,fumble,t:Date.now()};
-  e.tags=cpTags(e);this.push(e);return e};
+  if(fumble&&opts.area!=="none"){const fr=fumbleRoll(opts.area||fumbleArea(label));if(fr){e.fumbleRoll=fr;e.detail+=` · fumble table 1D10 ${fr.r}: ${fr.text}`}}
+  e.tags=cpTags(e);if(e.fumbleRoll&&e.fumbleRoll.bad)e.tags.push({t:"Fumble table "+e.fumbleRoll.r,c:"red"});this.push(e);return e};
 // the dice tray: CP2020 dice, and "d10x" / "d10!" for an exploding D10
 Monolith.hooks.trayQuick=()=>[["1D10","1D10"],["1D6","1D6"],["2D6","2D6"],["3D6","3D6"],["4D6","4D6"],["D10 (exploding)","1D10x"]];
 Monolith.hooks.trayRoll=v=>{if(/^1?d10\s*(x|!|e)$/i.test(String(v).trim())){Dice.check("D10",0);return true}return false};

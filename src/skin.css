@@ -954,3 +954,14 @@ h3.mh{font-size:20px;font-weight:800}
 .netpill{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--blue);padding:6px 8px;background:var(--blue-soft)}
 @media (max-width:1180px){.nf-body,.nr-layout,.netwin{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:720px){.ng{--nc:20px}.nf-layout{grid-template-columns:minmax(0,1fr)}}
+
+/* ============================== COMBAT (1.1.1) ============================== */
+.chipbtn{border:1px solid var(--line);background:transparent;color:var(--ink2);font-size:12.5px;padding:3px 8px;border-radius:0}
+.chipbtn b{color:var(--ink);font-family:var(--f-mono);font-weight:400}
+.chipbtn.on{border-color:var(--blue);background:var(--blue-soft);color:var(--ink)}
+.atk-sits{border:1px solid var(--line);padding:8px 10px}
+.atk-sits summary{cursor:pointer;display:flex;gap:8px;align-items:center}
+.atk-sitg{display:grid;gap:4px;margin-top:8px}
+.atk-area{display:grid;gap:8px;border:1px solid var(--line);padding:10px;background:var(--sunk)}
+.cb-opts select.sm{font-size:12.5px;padding:3px 6px;max-width:220px}
+.enc-tools{gap:8px}

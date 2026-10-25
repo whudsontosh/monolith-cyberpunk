@@ -33,8 +33,9 @@ function checkBody(){const c=ckChar();if(!c)return `<p class="muted">Open a runn
   const res=r?`<div class="ck-res ${r.fumble?"bad":r.dv?(r.total>=r.dv?"good":"bad"):""}" role="status"><div class="tot num">${r.total}</div><div style="min-width:0">
       <div class="verdict">${r.fumble?"Fumble: automatic failure":r.dv?(r.total>=r.dv?"Success":"Failure"):"Rolled"}${r.crit?" · critical":""}</div>
       <div class="det mono">${esc(r.detail)}</div>
-      <div class="faint" style="font-size:12.5px">${r.fumble?"A natural 1. Your GM may ask you to roll on the fumble table.":r.crit?"A natural 10: rolled again and added.":r.dv?(r.total>=r.dv?`Beat DV ${r.dv} by ${r.total-r.dv}.`:`Missed DV ${r.dv} by ${r.dv-r.total}.`):"No difficulty set: tell your GM the total."}</div>
-      ${r.fumble?`<button class="btn sm" data-act="ck-fumble">Roll 1D10 for the fumble table</button>`:""}</div></div>`:"";
+      ${r.fumble&&r.fumbleRoll?`<div class="det"><span class="chip red">${esc(r.fumbleRoll.label)} fumble table · ${r.fumbleRoll.r}</span> ${esc(r.fumbleRoll.text)}</div>`:""}
+      <div class="faint" style="font-size:12.5px">${r.fumble?(r.fumbleRoll?"A natural 1: the fumble table was rolled for you.":"A natural 1. The book has no fumble table for this kind of skill, so your GM decides what goes wrong."):r.crit?"A natural 10: rolled again and added.":r.dv?(r.total>=r.dv?`Beat DV ${r.dv} by ${r.total-r.dv}.`:`Missed DV ${r.dv} by ${r.dv-r.total}.`):"No difficulty set: tell your GM the total."}</div>
+      </div></div>`:"";
   return `<div class="ck">
     <div class="ck-pick">
       <div class="row" style="flex-wrap:nowrap;gap:6px"><input id="ck-q" value="${esc(s.q||"")}" placeholder="Search skills" aria-label="Search skills" autocomplete="off"><span class="seg" role="group" aria-label="Show"><button class="${s.all?"":"on"}" data-act="ck-all" data-v="0">Trained</button><button class="${s.all?"on":""}" data-act="ck-all" data-v="1">All</button></span></div>

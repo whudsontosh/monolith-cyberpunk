@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.1.1
+
+The rest of Friday Night Firefight, the rulebook's combat chapter.
+
+- **Attack modifiers:** the attack window has the book's situation modifiers (moving, tiny or silhouetted
+  targets, ambush, firing while running, two weapons, ricochets, turrets and more), aiming for up to three
+  turns, laser and telescopic sights, targeting scopes and smartgoggles, and the −3 for each extra action in
+  a turn. Aimed shots, sights and scopes switch off on a fast draw or full auto.
+- **Fast draw:** a Fast draw button rolls initiative at +3 and turns on the −3 snapshot penalty. The GM's
+  tracker has a fast draw box for every combatant.
+- **Fumble tables:** a natural 1 rolls the book's fumble table for the skill's stat (combat, athletics,
+  TECH, EMP and INT skills) and shows the result. Fumbling with a gun can jam it, drop it, discharge it or
+  hit yourself; automatic weapons roll their reliability.
+- **Cover:** the damage calculator and the GM's tracker add cover SP (walls, car doors, trees and more)
+  using the proportional armor rule.
+- **Melee:** fill in the defender's total, or let the app roll it, for opposed melee. Dodging (−2 to
+  attacks against them) and parrying, with blade save rolls, in the GM's tracker.
+- **Martial arts:** every style in the book with its key-attack bonuses and its moves (strike, kick, throw,
+  hold, choke, sweep, grapple, escape, disarm). Martial arts add their level to damage.
+- **Mono-edges:** monoblades and monokatanas count soft armor at a third and hard armor at two thirds,
+  double damage on a natural 10, and break on a fumble.
+- **Area weapons:** grenades (fragmentation, incendiary, stun, dazzle, sonic and gas), grenade launchers,
+  C-6 plastic explosive, mines and claymores, Molotov cocktails, flamethrowers, the RPG-A and the Scorpion
+  16 missile launcher. Missed throws scatter by the book's table, blasts hit everything in the radius, and
+  gas grenades take the book's gases. Grenades and explosives stack in your gear.
+- **Shotguns:** the pattern widens and its damage drops with range; autoshotguns fire several blasts.
+- **Suppressive fire:** fire rounds into a zone and the app works out the save. The GM sets the save in the
+  tracker and rolls each combatant who crosses it.
+- The GM's tools get a grenade scatter roll, and the rules reference has attack modifiers, cover, area
+  effects, scatter, fumbles, martial arts, melee and suppressive fire.
+- The Militech Arms RPG-A now costs the book's 7,500eb.
+
 ## 1.1.0
 
 Netrunning, from the Cyberpunk 2020 rulebook's Netrunner chapter.

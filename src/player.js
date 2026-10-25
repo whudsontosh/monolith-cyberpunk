@@ -256,7 +256,7 @@ function tabCombat(c,k,ed){
   const res=ui.dmg.result;
   return `<div style="display:grid;gap:14px">
     <div class="panel"><div class="panel-b row" style="justify-content:space-between">
-      <div class="row" style="gap:14px"><button class="btn primary" data-act="roll-init" data-b="${initBase}">Initiative ${initBase}+D10</button>
+      <div class="row" style="gap:14px"><button class="btn primary" data-act="roll-init" data-b="${initBase}">Initiative ${initBase}+D10</button><button class="btn sm" data-act="roll-init" data-b="${initBase+3}" data-fd="1" title="Fast draw: +3 initiative, −3 to hit this round, no scopes or aiming">Fast draw ${initBase+3}+D10</button>
       <span class="faint" style="font-size:12.5px">REF ${k.eff.REF}${c.role==="Solo"?` + Combat Sense ${cs}`:""}${k.init?` + boosters ${k.init}`:""}</span></div>
       <label class="row" style="gap:6px"><span class="label">Range</span><select data-act-change="set-range" aria-label="Range DV">${RANGE_DVS.map(r=>`<option value="${r[0]}" ${Number(ui.rangeDv)===r[0]?"selected":""}>${r[1]} · DV ${r[0]}</option>`).join("")}</select></label>
     </div></div>
@@ -269,7 +269,7 @@ function tabCombat(c,k,ed){
           ${shots?`<div class="row" style="margin-top:6px;gap:8px"><div class="ammo" aria-label="${w.ammo} of ${shots} rounds">${Array.from({length:Math.min(shots,50)},(_,j)=>`<i class="${j<w.ammo?"":"e"}"></i>`).join("")}</div><span class="mono faint" style="font-size:12px">${w.ammo}/${shots}</span>
           ${ed?`<button class="btn sm ghost" data-act="ammo" data-i="${i}" data-d="-1">−1</button>${Number(w.rof)>2?`<button class="btn sm ghost" data-act="ammo" data-i="${i}" data-d="-${Math.min(Number(w.rof),3)}">Burst −3</button><button class="btn sm ghost" data-act="ammo" data-i="${i}" data-d="-${Number(w.rof)}">Full auto −${esc(w.rof)}</button>`:""}<button class="btn sm ghost" data-act="ammo" data-i="${i}" data-d="reload">Reload</button>`:""}</div>`:""}
         </div>
-        <div class="a"><button class="btn sm primary" data-act="atk-open" data-id="${esc(w.id)}">Attack…</button><button class="rollbtn" data-act="roll-attack" data-i="${i}" data-b="${toHit}">Hit <b>${toHit}</b>+D10</button><button class="rollbtn" data-act="roll-dmg" data-i="${i}">Dmg <b>${esc(w.dmg)}</b></button>${ed?`<button class="btn sm ghost" data-act="edit-item" data-id="${w.id}">${ui.editItem===w.id?"Close":"Edit"}</button>`:""}</div>
+        <div class="a"><button class="btn sm primary" data-act="atk-open" data-id="${esc(w.id)}">Attack…</button><button class="rollbtn" data-act="roll-attack" data-i="${i}" data-b="${toHit}">Hit <b>${toHit}</b>+D10</button>${parseDice(String(w.dmg||"").toUpperCase())?`<button class="rollbtn" data-act="roll-dmg" data-i="${i}">Dmg <b>${esc(w.dmg)}</b></button>`:""}${ed?`<button class="btn sm ghost" data-act="edit-item" data-id="${w.id}">${ui.editItem===w.id?"Close":"Edit"}</button>`:""}</div>
         ${ui.editItem===w.id&&ed?itemEditor(c,"weapons",i,[["name","Name","text"],["type","Type (P/SMG/RIF/SHT/HVY/MEL)","text"],["wa","WA","number"],["dmg","Damage","text"],["shots","Magazine","number"],["rof","ROF","text"],["range","Range","text"],["rel","Reliability","text"],["skill","Skill","text"],["cost","Cost","number"]]):""}
         </div>`)}).join(""):`<p class="faint" style="padding:14px 0;margin:0">No weapons. Add one from the catalog.</p>`}
     </div></section>
@@ -279,6 +279,8 @@ function tabCombat(c,k,ed){
         <select data-act-change="dmg-loc" aria-label="Hit location" style="max-width:170px">${LOCS.map(l=>`<option value="${l[0]}" ${ui.dmg.loc===l[0]?"selected":""}>${l[1]} (SP ${spAt(c,l[0])})</option>`).join("")}</select>
         <button class="btn sm ghost" data-act="dmg-rollloc">Roll location</button>
         <label class="row" style="gap:4px"><input type="checkbox" data-act-change="dmg-ap" ${ui.dmg.ap?"checked":""}> AP rounds</label>
+        <label class="row" style="gap:4px"><input type="checkbox" data-act-change="dmg-mono" ${ui.dmg.mono?"checked":""}> Mono-edge</label>
+        <select data-act-change="dmg-cover" aria-label="Cover" style="max-width:190px"><option value="">No cover</option>${COVER.map(([n,v])=>`<option value="${v}|${esc(n)}" ${ui.dmg.cover===v+"|"+n?"selected":""}>Behind ${esc(n.toLowerCase())} (SP ${v})</option>`).join("")}</select>
         <button class="btn" data-act="dmg-calc">Calculate</button>
       </div>
       ${res?`<div class="calc-out"><div>${esc(res.text)}</div>${res.wounds>0&&ed?`<div class="row"><button class="btn primary sm" data-act="dmg-apply">Apply ${res.wounds} damage${res.ablate?" and ablate armor":""}</button><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`:`<div><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`}</div>`:""}
@@ -422,7 +424,8 @@ Object.assign(A,{
   "hc-mode":el=>{ui.hcMode=el.dataset.v;renderModal()},
   "buy":el=>{const c=curChar();if(!c||!canEditChar(c)){showNotice(c&&c.id==="sample"?"This is the example character. Copy it to your runners to edit.":"You can't change this character.");return}
     const i=Number(el.dataset.i),k=el.dataset.k;let item,cost,label;
-    if(k==="w"){item=mkWeapon(WEAPONS[i]);cost=WEAPONS[i][10];c.weapons.push(item)}
+    if(k==="w"){const row=WEAPONS[i];cost=row[10];const fx=AREA_FX[row[0]];const ex=fx&&ATK_STACK.has(fx.kind)&&c.weapons.find(x=>x.name===row[0]);
+      if(ex){ex.shots=String((Number(ex.shots)||0)+1);ex.ammo=(Number(ex.ammo)||0)+1;item=ex}else{item=mkWeapon(row);c.weapons.push(item)}}
     if(k==="a"){item=mkArmor(ARMOR[i]);cost=ARMOR[i][4];c.armor.push(item)}
     if(k==="g"){const g=GEAR[i];cost=g[1];const ex=c.gear.find(x=>x.name===g[0]);if(ex)ex.qty=(Number(ex.qty)||1)+1;else c.gear.push({id:uid(),name:g[0],qty:1,cost:g[1],notes:""});item={name:g[0]}}
     if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item)}
@@ -450,7 +453,7 @@ Object.assign(A,{
   "wound":el=>mutate(c=>{const n=Number(el.dataset.n);c.wounds=c.wounds===n?n-1:n}),
   "roll-save":el=>{const c=curChar();const k=calc(c);const t=el.dataset.t;const target=t==="stun"?k.stunSave:k.deathSave;const r=d(10);
     pushRoll({who:whoName(),label:t==="stun"?`Stun save (need ≤ ${target})`:`Death save (need ≤ ${target})`,detail:`D10 = ${r} → ${r<=target?(t==="stun"?"stays conscious":"survives this turn"):(t==="stun"?"knocked out":"dies")}`,total:r,t:Date.now()})},
-  "roll-init":el=>checkRoll("Initiative",Number(el.dataset.b)),
+  "roll-init":el=>{const fd=el.dataset.fd==="1";checkRoll(fd?"Initiative (fast draw)":"Initiative",Number(el.dataset.b),{area:"none"});const st0=atkState();const set=new Set(st0.sits||[]);if(fd)set.add("fastdraw");else set.delete("fastdraw");st0.sits=[...set];if(fd)showNotice("Fast draw: −3 to hit this round. It's switched on in the Attack window.")},
   "set-range":()=>{},
   "roll-attack":el=>{const c=curChar();const w=c.weapons[Number(el.dataset.i)];checkRoll(`Attack · ${w.name}`,Number(el.dataset.b),{dv:ui.rangeDv})},
   "roll-dmg":el=>{const c=curChar();const k=calc(c);const w=c.weapons[Number(el.dataset.i)];exprRoll(`Damage · ${w.name}`,w.dmg,w.type==="MEL"?k.melee:0)},
@@ -471,8 +474,9 @@ Object.assign(A,{
   "pay-month":el=>mutate(c=>{c.eb=(Number(c.eb)||0)-Number(el.dataset.v)}),
   "dmg-rollloc":()=>{const r=d(10);ui.dmg.loc=r===1?"head":r<=4?"torso":r===5?"rarm":r===6?"larm":r<=8?"rleg":"lleg";showNotice(`Location roll ${r}: ${LOCS.find(l=>l[0]===ui.dmg.loc)[1]}`);render()},
   "dmg-calc":()=>{const c=curChar();const k=calc(c);const amt=Number(document.getElementById("dmg-amt").value)||0;ui.dmg.amount=amt||"";if(!amt){showNotice("Enter the damage rolled first.");return}
-    const loc=ui.dmg.loc;let sp=spAt(c,loc);const locName=LOCS.find(l=>l[0]===loc)[1];if(ui.dmg.ap)sp=Math.floor(sp/2);
-    let pen=amt-sp;if(pen<=0){ui.dmg.result={text:`${amt} damage vs SP ${sp} at the ${locName}: stopped by armor. No wounds.`,wounds:0};render();return}
+    const loc=ui.dmg.loc;const outerA=c.armor.filter(a=>a.worn&&a.locs.includes(loc)).sort((a,b)=>b.sp-a.sp)[0];const cov=ui.dmg.cover?Number(String(ui.dmg.cover).split("|")[0]):0;
+    let sp=hitSP(spAt(c,loc),{ap:ui.dmg.ap,mono:ui.dmg.mono,hard:!!(outerA&&HARD_ARMOR.test(outerA.name)),cover:cov});const locName=LOCS.find(l=>l[0]===loc)[1];
+    let pen=amt-sp;if(pen<=0){ui.dmg.result={text:`${amt} damage vs SP ${sp}${cov?" (armor and cover)":""} at the ${locName}: stopped${cov?"":" by armor"}. No wounds.`,wounds:0};render();return}
     let steps=[`${amt} − SP ${sp} = ${pen}`];
     if(ui.dmg.ap){pen=Math.max(1,Math.floor(pen/2));steps.push(`AP halves → ${pen}`)}
     if(loc==="head"){pen*=2;steps.push(`head ×2 → ${pen}`)}
@@ -492,6 +496,8 @@ Object.assign(CHANGE,{
   "set-range":el=>{ui.rangeDv=Number(el.value);render()},
   "dmg-loc":el=>{ui.dmg.loc=el.value},
   "dmg-ap":el=>{ui.dmg.ap=el.checked},
+  "dmg-mono":el=>{ui.dmg.mono=el.checked},
+  "dmg-cover":el=>{ui.dmg.cover=el.value},
   "shop-free":el=>{ui.shopFree=el.checked;renderModal()},
   "armor-loc":el=>mutate(c=>{const a=c.armor[Number(el.dataset.i)];const l=el.dataset.loc;if(el.checked){if(!a.locs.includes(l))a.locs.push(l)}else a.locs=a.locs.filter(x=>x!==l)}),
 });
