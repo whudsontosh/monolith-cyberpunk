@@ -158,6 +158,8 @@ async def main():
         await pl.fill("input[data-medui=pdmg]","15");await J("rig([[10,9]])");await pl.click("[data-act=med-medic][data-s=first]");await pl.wait_for_timeout(100)
         k=await J("[calc(curChar()).eff.TECH,skillLevel(curChar(),'First Aid')]")
         ok(("worked" if k[0]+k[1]+9>15 else "failed") in await pl.text_content("main"),"treating someone else uses your TECH + First Aid")
+        await pl.click("[data-act=med-who][data-v=self]");await J("(()=>{const c=curChar();c.wounds=20;c.med={};saveChar(c,true);render()})()");await pl.wait_for_timeout(100)
+        ok(not await J("[...document.querySelectorAll('*')].flatMap(e=>[...e.attributes].map(a=>a.name)).filter(n=>/['\"=]/.test(n))"),"no broken attributes on the Medical tab")
         print("player errors:",errs)
 
         # ---------------- GM ----------------
@@ -185,6 +187,7 @@ async def main():
         await gm.fill("#enc-medic","12");await gm.wait_for_timeout(600)
         await gm.evaluate("rig([[10,6]])");await gm.click(f"[data-act=cb-stab][data-cid='{cid}']");await gm.wait_for_timeout(150)
         ok(await gm.evaluate(f"medStable(st.encounter.list.find(x=>x.cid==='{cid}').npc)") and await gm.locator(f"#cb-{cid} [data-t=death]").count()==0,"12 + 6 = 18: the NPC is stabilized and stops making death saves")
+        await gm.fill("#enc-medic","");await gm.wait_for_timeout(600);ok(not await gm.evaluate("[...document.querySelectorAll('*')].flatMap(e=>[...e.attributes].map(a=>a.name)).filter(n=>/['\"=]/.test(n))"),"no broken attributes in the tracker")
         await gm.screenshot(path=shot("gm-encounter.png"),full_page=True)
         await gm.click("nav [data-act=tab][data-t=reference]");await gm.wait_for_timeout(150)
         t=await gm.text_content("main");ok(all(x in t for x in ["Stabilization","Death State","Healing rates","Surgery codes","Body bank","Bodysculpting","Street drugs","Drug designer: effects","Drug designer: side effects"]),"the rules reference has the medical tables")

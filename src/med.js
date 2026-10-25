@@ -170,9 +170,9 @@ function medTreatHTML(c,k,ctx){const m=medOf(c);const u=ctx.u;const ed=ctx.ed;co
   const advH=`<div class="row" style="gap:6px;flex-wrap:wrap"><span class="label">Advantages</span>${STAB_MODS.map(([id,l,v])=>`<button class="chipbtn ${advs.has(id)?"on":""}" data-act="med-adv" data-id="${esc(c.id)}" data-v="${id}" aria-pressed="${advs.has(id)}">${l} +${v}</button>`).join("")}</div>`;
   const cur=m.treat?`<p class="med-p">Treated with <b>${m.treat==="medtech"?"Medical Tech":"First Aid"}</b>.${ed?` <button class="linkish" data-act="med-untreat" data-id="${esc(c.id)}">Clear</button>`:""}</p>`:k.w?`<p class="med-p faint">No successful treatment yet: they get 2 points worse every day. One roll a day until it works.</p>`:"";
   const btns=ed&&k.w&&!m.dead&&!m.gone?`<div class="row" style="gap:6px;flex-wrap:wrap">
-    ${mortal?medBtn(c,"med-stab",`Stabilize: need ${k.w}+`,self?"disabled title='You can\\'t stabilize yourself'":"","btn sm primary"):""}
+    ${mortal?medBtn(c,"med-stab",`Stabilize: need ${k.w}+`,self?'disabled title="You can&#39;t stabilize yourself"':"","btn sm primary"):""}
     ${m.treat!=="medtech"&&m.treat!=="first"?medBtn(c,"med-treat",`First Aid: beat ${k.w}`,`data-s="first"`):""}
-    ${m.treat!=="medtech"?medBtn(c,"med-treat",`Medical Tech: beat ${k.w}`,`data-s="medtech" ${self?"disabled title='Not on yourself'":""}`):""}</div>`:"";
+    ${m.treat!=="medtech"?medBtn(c,"med-treat",`Medical Tech: beat ${k.w}`,`data-s="medtech" ${self?'disabled title="Not on yourself"':""}`):""}</div>`:"";
   return `<section class="panel"><div class="panel-h"><h3>Treatment</h3>${advB?`<span class="faint mono" style="font-size:12px">+${advB} to stabilize</span>`:""}</div><div class="panel-b med-grid">
     ${k.w||m.dead?`${who}${tot}${mortal?advH:""}${btns}${cur}`:`<p class="faint med-p">Not hurt. Nothing to treat.</p>`}</div></section>`}
 function medHealHTML(c,k,ctx){const m=medOf(c);const u=ctx.u;const ed=ctx.ed;const hp=healParts(c);const dt=daysToHeal(c);
