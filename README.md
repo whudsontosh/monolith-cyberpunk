@@ -14,6 +14,7 @@ updates it whenever it's opened.
 | `src/` | The game: rules and data (`rules.js`), the builder and sheet (`player.js`), checks, attacks, item explanations, the GM screens (`gm.js`), homebrew and packages, the paper sheet, and its look (`skin.css`, `fonts/`) |
 | `src/net*.js` | Netrunning: the Net rules and data (`net.js`), decks and programs on the sheet and the player's Net window (`net_player.js`), data fortresses and live runs (`net_gm.js`) |
 | `src/med*.js` | Trauma Team: the medical rules, drugs and shared panels (`med.js`), the player's Medical tab, drug lab and bodyshop (`med_player.js`), the GM's downtime and medical tools (`med_gm.js`) |
+| `src/cyber*.js` | Cyberlimbs and options, chipware, frames, facedowns and pay (`cyber.js`), the player's Cyberware tab and facedown window (`cyber_player.js`), the GM's side (`cyber_gm.js`) |
 | `src/game.js` | How the game registers with Monolith (see the game contract in Monolith's README) |
 | `src/build.py` | Builds `dist/game/` (what Monolith loads) and `dist/release/` (the zip and `release.json`) |
 | `tests/` | The game's tests, run against a Monolith checkout |

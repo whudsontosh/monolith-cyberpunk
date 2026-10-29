@@ -11,7 +11,7 @@ function tabMed(c,k,ed){const u=medUI(c.id);const ctx={ed,u,gm:false};
 function medDrugsHTML(c,k,ed){const carried=drugCarried(c);const fx=medFxHTML(c,{ed});
   return `<section class="panel"><div class="panel-h"><h3>Drugs & effects</h3>${ed?`<div class="row" style="gap:6px"><button class="btn sm" data-act="open-modal" data-m="shop" data-tab="Drugs">+ Buy</button><button class="btn sm ghost" data-act="open-modal" data-m="druglab">Drug lab…</button></div>`:""}</div><div class="panel-b med-grid">
     ${carried.length?`<div class="items">${carried.map(g=>`<div class="it" data-info="own:gear:${esc(g.id)}"><div style="min-width:0"><div class="t">${esc(g.name)} <span class="faint mono">×${esc(g.qty)}</span></div><div class="m">${esc(drugSummary(g.drug))}</div></div>${ed?`<button class="btn sm" data-act="med-dose" data-gid="${esc(g.id)}">Take a dose</button>`:""}</div>`).join("")}</div>`:`<p class="faint med-p">No drugs on you.</p>`}
-    ${fx?`<span class="label">Running now</span>${fx}`:""}</div></section>`}
+    ${fx?`<span class="label">Running now</span>${fx}`:""}${medSavesHTML(c,{ed})}</div></section>`}
 function medMedicHTML(c,k,ed){const u=medUI(c.id);const p=medMedicParts(c,k);
   return `<section class="panel"><div class="panel-h"><h3>Treat someone else</h3></div><div class="panel-b med-grid">
     <p class="faint med-p">TECH ${p.t} · First Aid ${p.fa} · Medical Tech ${p.mt}. Tell the GM or the patient's player the result, or they can roll it on their own Medical tab with your total.</p>
@@ -32,18 +32,19 @@ function medShopRows(c,t){
   if(t==="Drugs"){const L=medShopList(c);return `<div class="label" style="padding-top:12px">Street drugs</div>`+L.map((x,i)=>(i===DRUGS.length?`<div class="label" style="padding-top:12px">Your formulas</div>`:"")+shopRow(x.name,`${x.type||"Designer drug"} · Str +${x.str} · Diff ${drugDiff(x)} · ${(DRUG_DUR.find(y=>y[0]===x.dur)||[])[1]} · ${drugSummary(x)}`,x.pack?x.packCost:drugCost(x),"dr",i)).join("")}
   let last="";return BODYSHOP.map((x,i)=>{const g={look:"Bodysculpting",attr:"Bodysculpting",exotic:"Exotics",part:"Body bank",vat:"Vat-grown tissue",store:"Body bank storage",tt:"Trauma Team",nano:"Treatments"}[x[2]];const head=g!==last?`<div class="label" style="padding-top:12px">${g}</div>`:"";last=g;return head+shopRow(x[0],x[3].note||"",x[1],"bs",i)}).join("")}
 function medBuy(el){const c=curChar();if(!c||!canEditChar(c)){showNotice("You can't change this character.");return}if(typeof shopLocked==="function"&&shopLocked(c)){showNotice("The shop is closed. Your GM opens it when you reach a vendor.");return}const i=Number(el.dataset.i);const free=ui.shopFree;
-  if(el.dataset.k==="dr"){const x=medShopList(c)[i];if(!x)return;const cost=x.pack?x.packCost:drugCost(x);const n=x.pack||1;
+  const shop=typeof charShop==="function"?charShop(c):null;const kind=el.dataset.k;
+  if(el.dataset.k==="dr"){const x=medShopList(c)[i];if(!x)return;if(x.book&&shopHidden(shop,"dr",x.name))return;const cost=x.book?shopPrice(shop,"dr",[x.name,x.pack?x.packCost:drugCost(x)]):drugCost(x);const n=x.pack||1;
     const ex=c.gear.find(g=>g.drug&&g.name===x.name);if(ex)ex.qty=(Number(ex.qty)||0)+n;else c.gear.push({id:uid(),name:x.name,qty:n,cost:Math.round(cost/n),notes:x.type||"Drug",desc:x.text||"",drug:clone(x)});
     if(!free)c.eb=(Number(c.eb)||0)-cost;saveChar(c);renderModal();render();showNotice(`${free?"Added":"Bought"} ${x.pack?x.pack+" × ":""}${x.name}.`);return}
-  const r=BODYSHOP[i];if(!r)return;const [name,cost,kind,ex]=r;let msg=`${free?"Added":"Bought"}: ${name}.`;
-  if(kind==="part"){const roll=d(10);if(roll<=3){Dice.raw(`Body bank: ${name.replace(/^Body bank: /,"")}`,`1D10 = ${roll}: not in today. Try again tomorrow.`,roll,whoOf(c),[{t:"Not in",c:"amber"}]);showNotice("Not in today (1D10 "+roll+"). Try again tomorrow.");return}
+  const r=BODYSHOP[i];if(!r||shopHidden(shop,"bs",r[0]))return;const [name,,kind2,ex]=r;const cost=shopPrice(shop,"bs",r);const kindB=kind2;let msg=`${free?"Added":"Bought"}: ${name}.`;
+  if(kindB==="part"){const roll=d(10);if(roll<=3){Dice.raw(`Body bank: ${name.replace(/^Body bank: /,"")}`,`1D10 = ${roll}: not in today. Try again tomorrow.`,roll,whoOf(c),[{t:"Not in",c:"amber"}]);showNotice("Not in today (1D10 "+roll+"). Try again tomorrow.");return}
     c.gear.push({id:uid(),name:`Replacement ${name.replace(/^Body bank: /,"")} (body bank)`,qty:1,cost,notes:roll<=5?"A different color, or another small mismatch":"A good match",desc:"Needs Critical (CR) surgery to attach."});
     Dice.raw(`Body bank: ${name.replace(/^Body bank: /,"")}`,`1D10 = ${roll}: ${roll<=5?"in, but a different color or another small mismatch":"in, and a good match"}.`,roll,whoOf(c),[{t:"In stock",c:"green"}])}
-  if(kind==="vat")c.gear.push({id:uid(),name:`Replacement ${name.replace(/^Vat-grown: /,"")} (vat-grown)`,qty:1,cost,notes:"Matches your genes",desc:"Needs Critical (CR) surgery to attach."});
-  if(kind==="store")c.gear.push({id:uid(),name,qty:1,cost,notes:ex.note,desc:ex.note});
-  if(kind==="tt"){medEnsure(c).tt="account";msg="Trauma Team account paid for this month.";}
-  if(kind==="nano"){const roll=d(10);if(roll!==1){Dice.raw("Nanotech: does this hospital have it?",`1D10 = ${roll}: no (only 1 in 10 do).`,roll,whoOf(c),[{t:"Not here",c:"amber"}]);showNotice("This hospital doesn't have nanotech. Only 1 in 10 do.");return}medEnsure(c).nano=true;msg="Nanotech treatment: +1 healing a day while you're treated."}
-  if(kind==="look"||kind==="attr"||kind==="exotic"){const item={id:uid(),name:kind==="attr"?"Bodysculpt (+1 ATTR)":name.replace(/^Exotic: /,"Exotic "),cat:"Bodysculpt",cost,hc:"0",hcLoss:0,notes:ex.note||"",surg:"M",...(kind==="attr"?{mods:{ATTR:1}}:{}),...(ex.mods?{mods:clone(ex.mods)}:{})};c.cyber.push(item);
+  if(kindB==="vat")c.gear.push({id:uid(),name:`Replacement ${name.replace(/^Vat-grown: /,"")} (vat-grown)`,qty:1,cost,notes:"Matches your genes",desc:"Needs Critical (CR) surgery to attach."});
+  if(kindB==="store")c.gear.push({id:uid(),name,qty:1,cost,notes:ex.note,desc:ex.note});
+  if(kindB==="tt"){medEnsure(c).tt="account";msg="Trauma Team account paid for this month.";}
+  if(kindB==="nano"){const roll=d(10);if(roll!==1){Dice.raw("Nanotech: does this hospital have it?",`1D10 = ${roll}: no (only 1 in 10 do).`,roll,whoOf(c),[{t:"Not here",c:"amber"}]);showNotice("This hospital doesn't have nanotech. Only 1 in 10 do.");return}medEnsure(c).nano=true;msg="Nanotech treatment: +1 healing a day while you're treated."}
+  if(kindB==="look"||kindB==="attr"||kindB==="exotic"){const item={id:uid(),name:kindB==="attr"?"Bodysculpt (+1 ATTR)":name.replace(/^Exotic: /,"Exotic "),cat:"Bodysculpt",cost,hc:"0",hcLoss:0,notes:ex.note||"",surg:"M",...(kindB==="attr"?{mods:{ATTR:1}}:{}),...(ex.mods?{mods:clone(ex.mods)}:{})};c.cyber.push(item);
     if(ex.cancer){const roll=d(10);Dice.raw("Skin alteration: cancer check",`1D10 = ${roll}${roll===1?": the graft mutates into skin cancer.":": no cancer."}`,roll,whoOf(c),[{t:roll===1?"Cancer":"Clear",c:roll===1?"red":"green"}])}}
   if(!free)c.eb=(Number(c.eb)||0)-cost;saveChar(c);renderModal();render();showNotice(msg)}
 {const _buy=A.buy;A.buy=el=>{if(el&&(el.dataset.k==="dr"||el.dataset.k==="bs"))return medBuy(el);return _buy(el)}}

@@ -26,9 +26,9 @@ const ROLES={
  Techie:{ab:"Jury Rig",abStat:"TECH",blurb:"Renegade mechanics who fix, build and improvise anything.",
   skills:["Awareness/Notice","Basic Tech","CyberTech","Teaching","Education & Gen. Know","Electronics",{pick:TECH_PICKS},{pick:TECH_PICKS},{pick:TECH_PICKS}],income:[1000,2000,3000,4000,5000,8000]},
  Media:{ab:"Credibility",abStat:"INT",blurb:"Reporters and screamsheet writers who expose the truth.",
-  skills:["Awareness/Notice","Composition","Education & Gen. Know","Persuasion & Fast Talk","Human Perception","Social","Streetwise","Photo & Film","Interview"],income:[1000,1200,3000,4500,7000,10000]},
+  skills:["Awareness/Notice","Composition","Education & Gen. Know","Persuasion & Fast Talk","Human Perception","Social","Streetwise","Photo & Film","Interview"],income:[1000,1200,3000,5000,7000,10000]},
  Cop:{ab:"Authority",abStat:"COOL",blurb:"Badges on the edge, from beat cops to corporate security.",
-  skills:["Awareness/Notice","Handgun","Human Perception","Athletics","Education & Gen. Know","Brawling","Melee","Interrogation","Streetwise"],income:[1000,1200,3000,4500,7000,9000]},
+  skills:["Awareness/Notice","Handgun","Human Perception","Athletics","Education & Gen. Know","Brawling","Melee","Interrogation","Streetwise"],income:[1000,1200,3000,5000,7000,9000]},
  Corporate:{ab:"Resources",abStat:"INT",blurb:"Slick suits with company money and company enemies.",
   skills:["Awareness/Notice","Human Perception","Education & Gen. Know","Library Search","Social","Persuasion & Fast Talk","Stock Market","Wardrobe & Style","Personal Grooming"],income:[1500,3000,5000,7000,9000,12000]},
  Fixer:{ab:"Streetdeal",abStat:"COOL",blurb:"Deal-makers and smugglers who know where everything is.",
@@ -363,19 +363,22 @@ function skillDef(c,name){
   return {n:name,s:"INT",m:1};
 }
 function sk(c,name){return c.skills?.[name]||{c:0,p:0,b:0}}
-function skillLevel(c,name){const s=sk(c,name);return (s.c||0)+(s.p||0)+(s.b||0)}
+function skillNatural(c,name){const s=sk(c,name);return (s.c||0)+(s.p||0)+(s.b||0)}
+// a working skill chip sets the level to the chip's (pg. 83); IP and the builder use the natural level
+function skillLevel(c,name){const ch=typeof chipLevel==="function"?chipLevel(c,name):null;return ch!=null?ch:skillNatural(c,name)}
 function careerUsed(c){return careerList(c).filter(Boolean).reduce((a,n)=>a+(sk(c,n).c||0),0)}
 function pickupPool(c){return (c.stats.REF||0)+(c.stats.INT||0)}
 function pickupUsed(c){return Object.values(c.skills||{}).reduce((a,s)=>a+(s.p||0),0)}
 function statSum(c){return STAT_KEYS.reduce((a,k)=>a+(c.stats[k]||0),0)}
-function ipCost(c,name){const lv=skillLevel(c,name);return Math.max(1,lv)*10*(skillDef(c,name).m||1)}
+function ipCost(c,name){const lv=skillNatural(c,name);return Math.max(1,lv)*10*(skillDef(c,name).m||1)}
 function btmFor(body){return body<=2?0:body<=4?-1:body<=7?-2:body<=9?-3:body===10?-4:-5}
 function meleeBonus(body){return body<=2?-2:body<=4?-1:body<=7?0:body<=9?1:body===10?2:body<=12?4:6}
 function propBonus(diff){return diff<=4?5:diff<=8?4:diff<=14?3:diff<=20?2:diff<=26?1:0}
 function layersAt(c,loc){
   const out=[];
   (c.armor||[]).forEach(a=>{ if(a.worn&&a.locs?.includes(loc)) out.push({name:a.name,sp:Math.max(0,(Number(a.sp)||0)-(a.dmg?.[loc]||0)),id:a.id}); });
-  (c.cyber||[]).forEach(cy=>{ if(cy.armor?.locs?.includes(loc)) out.push({name:cy.name,sp:Number(cy.armor.sp)||0,cyber:true}); });
+  (c.cyber||[]).forEach(cy=>{ if(!cy.off&&cy.armor?.locs?.includes(loc)) out.push({name:cy.name,sp:Number(cy.armor.sp)||0,cyber:true}); });
+  if(typeof limbAt==="function"){const h=limbAt(c,loc);if(h&&optsOn(c,h).some(x=>/^Cyberlimb armor/.test(x.name||"")))out.push({name:"Cyberlimb armor",sp:20,cyber:true})}
   return out;
 }
 function spAt(c,loc){
@@ -386,7 +389,7 @@ function spAt(c,loc){
 }
 function calc(c){
   const base={...c.stats};
-  const mods={};(c.cyber||[]).forEach(cy=>{for(const [k,v] of Object.entries(cy.mods||{}))mods[k]=(mods[k]||0)+Number(v||0)});
+  const mods={};(c.cyber||[]).filter(cy=>!cy.off).forEach(cy=>{for(const [k,v] of Object.entries(cy.mods||{}))mods[k]=(mods[k]||0)+Number(v||0)});
   // drugs and other effects running now (c.fx), and stat points lost for good (c.statLoss)
   (c.fx||[]).forEach(f=>{for(const [k,v] of Object.entries(f.mods||{}))mods[k]=(mods[k]||0)+Number(v||0)});
   for(const [k,v] of Object.entries(c.statLoss||{}))mods[k]=(mods[k]||0)-Number(v||0);
@@ -406,11 +409,11 @@ function calc(c){
   if(level===3){["REF","INT","COOL"].forEach(k=>eff[k]=Math.ceil(eff[k]/2))}
   if(level>=4){["REF","INT","COOL"].forEach(k=>eff[k]=Math.ceil(eff[k]/3))}
   const body=eff.BODY;
-  const init=(c.cyber||[]).reduce((a,x)=>a+(Number(x.init)||0),0);
+  const init=(c.cyber||[]).filter(x=>!x.off).reduce((a,x)=>a+(Number(x.init)||0),0);const frame=typeof frameOf==="function"?frameOf(c):null;
   return {base,eff,mods,ev,hcLoss,humMax,humanity,level,w,
-    btm:btmFor(body),save:body,run:eff.MA*3,leap:Math.floor(eff.MA*3/4),lift:body*40,carry:body*10,
+    btm:btmFor(body),save:body,run:eff.MA*3,leap:Math.floor(eff.MA*3/4),lift:frame?frame.str*50:body*40,carry:body*10,frame,
     stunSave:(level?body-(level-1):body)+fxStun,fxStun,deathSave:level>=4?body-(level-4):null,
-    init,smart:(c.cyber||[]).some(x=>x.smart),melee:meleeBonus(body)};
+    init,smart:(c.cyber||[]).some(x=>x.smart&&!x.off),melee:frame?Math.max(meleeBonus(body),frame.dmg):meleeBonus(body)};
 }
 function woundLabel(level){return level?WOUND_LEVELS[level-1]:"Uninjured"}
 function woundChipClass(level){return level===0?"green":level<=1?"ink":level<=2?"amber":"red"}
@@ -566,9 +569,10 @@ function hitSP(sp,{ap,mono,hard,cover}={}){let s=Number(sp)||0;if(mono)s=Math.fl
 /* ============================== CHARACTER FILES ============================== */
 function normalizeChar(x){const b=blankChar();const c={...b,...clone(x)};
   ["skills","roleChoices","stats","lifestyle","lifepath","ip"].forEach(k=>{if(!c[k]||typeof c[k]!=="object")c[k]=b[k]});
-  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs","fx","drugsMade"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
+  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs","fx","drugsMade","chips"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
   if(!c.deck||typeof c.deck!=="object"||Array.isArray(c.deck))c.deck=null;
   ["med","statLoss"].forEach(k=>{if(c[k]!=null&&(typeof c[k]!=="object"||Array.isArray(c[k])))c[k]={}});
+  if(typeof hostsOf==="function")hostsOf(c).forEach(h=>{if(!h.loc)h.loc=freeLoc(c,hostKind(h),h)});
   STAT_KEYS.forEach(k=>{if(typeof c.stats[k]!=="number")c.stats[k]=Number(c.stats[k])||2});
   if(!c.id)c.id=uid();return c}
 

@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.1.4
+
+The book's remaining small rules.
+
+- **Cyberlimbs and cyberoptics:** each cyberarm, cyberleg and cyberoptic is on a side (right arm, left eye and
+  so on) and holds its options: 4 on an arm, 3 on a leg, 4 on an eye, with hands, feet and video options
+  counting the book's spaces, and one covering or limb armor per limb. Options need a limb or eye with room;
+  the shop asks which one. The Cyberware tab shows each limb with its options.
+- **Cyberlimb damage:** a limb takes 20 structural damage before it's useless and 30 before it's destroyed
+  (hydraulic rams 30/40; myomar and reinforced joints +5). Hits there go to the limb, not your wounds, with no
+  stun save, in the damage calculator and the GM's Apply hit. Limb armor counts as SP 20 on that limb.
+- **Chipware:** buy skill chips at the book's prices per level, slot as many as your INT, and practice reflex
+  chips in (2 days a level). A working chip sets the skill to its level. Needs a neural processor and plugs
+  or a chipware socket.
+- **Switching implants off and therapy:** any implant can be switched off, which stops its effects. With
+  everything off, therapy brings back 2 EMP a week. At EMP 0 the sheet and the GM's screens show
+  cyberpsychosis.
+- **Adrenal booster:** a Boost button: +1 REF for 1D6+2 turns, three times a day.
+- **Linear frames:** their Strength sets your lift (50 × Strength kg) and melee damage bonus.
+- **Facedowns and Reputation:** a Facedown window for players and in the GM's combat tracker (COOL + Rep +
+  1D10; the loser backs down or fights at −3), a reputation for cowardice, and a "Has someone heard of you?"
+  roll on the Rep counter.
+- **Pay:** the Lifestyle panel shows your job from the book's occupation table and a Get paid button. Rolling
+  starting funds also rolls whether you just lost the job. Media and Cop pay at level 8 now match the book.
+- **Drugs and saves:** effects that help one skill (Stim's Endurance, enhanced perception's Awareness) are
+  added to that skill's check. Saves against poison, gas, disease and sleep drugs on the Medical tab include
+  drug bonuses, toxin binders and nasal filters.
+- **Weapons:** lasers dial 1D6 to 5D6 a shot from a 10D6 charge; a microwaver hit offers the side-effects
+  roll; knives and shuriken are thrown up to BODY × 3 meters (grenades stay at 10 × BODY).
+- **Netrunning:** defences move 5 spaces a turn like runners, with a GM override, and their reach lights up.
+  Files can hold money that pays the runner who copies them.
+- **The GM:** the campaign shop can hide and reprice drugs and bodyshop items, the runner's wound panel shows
+  Stabilized or Dying, the runner's page shows their cyberlimbs, and the rules reference has cyberlimbs,
+  chipware, Reputation, facedowns, occupations, linear frames, the microwaver table and therapy.
+
 ## 1.1.3
 
 The rest of the book's shop.

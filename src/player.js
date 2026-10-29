@@ -93,7 +93,7 @@ function wizPickup(c){
     <div class="pool"><b class="num ${left<0?"over":""}">${left}</b><span class="muted">of ${pool} pickup points left (REF ${c.stats.REF} + INT ${c.stats.INT}). Totals cap at 10.</span></div>
     <div class="row"><input id="pk-search" data-ui="skSearch" data-rerender value="${esc(ui.skSearch)}" placeholder="Filter skills" style="max-width:260px" aria-label="Filter skills"><button class="btn sm" data-act="open-modal" data-m="addskill">+ Custom skill (Expert, Language…)</button></div>
     <div class="panel"><div class="panel-b" style="padding-block:6px">
-      ${(rows=>cols2(rows,rows.map(()=>1)))(names.map(n=>{const s=sk(c,n);const tot=skillLevel(c,n);return rg("pk-"+n,`<div class="sk" style="break-inside:avoid;grid-template-columns:minmax(0,1fr) auto"><div class="nm">${esc(n)}<em>${skillDef(c,n).s}</em>${s.c?` <span class="chip ink">career ${s.c}</span>`:""}${guideOn(c)?`<p class="hint">${esc(skillHint(c,n))}</p>`:""}</div>
+      ${(rows=>cols2(rows,rows.map(()=>1)))(names.map(n=>{const s=sk(c,n);const tot=skillNatural(c,n);return rg("pk-"+n,`<div class="sk" style="break-inside:avoid;grid-template-columns:minmax(0,1fr) auto"><div class="nm">${esc(n)}<em>${skillDef(c,n).s}</em>${s.c?` <span class="chip ink">career ${s.c}</span>`:""}${guideOn(c)?`<p class="hint">${esc(skillHint(c,n))}</p>`:""}</div>
       <div class="stepper"><button class="icon-btn" data-act="pickup-step" data-n="${esc(n)}" data-d="-1" ${(s.p||0)<=0?"disabled":""} aria-label="Lower">−</button><b class="num">${tot}</b><button class="icon-btn" data-act="pickup-step" data-n="${esc(n)}" data-d="1" ${tot>=10||left<=0?"disabled":""} aria-label="Raise">+</button></div></div>`)}))}
     </div></div>
   </div>`;
@@ -180,6 +180,7 @@ function viewSheet(c){
   const tabs=[["skills","Skills"],["combat","Combat"],["med","Medical"],["cyber","Cyberware"],["gear","Gear & cash"],...(netTabShown(c)?[["net","Netrunning"]]:[]),["lifepath","Lifepath"],["notes","Notes"]];
   const body={skills:tabSkills,combat:tabCombat,med:tabMed,cyber:tabCyber,gear:tabGear,net:tabNet,lifepath:tabLifepath,notes:tabNotes}[ui.tab]||tabSkills;
   return `
+  ${k.eff.EMP<=0&&k.humMax?`<div class="banner warnb" style="margin-bottom:14px"><span class="chip red">Cyberpsychosis</span> ${esc(c.handle||"This runner")}'s Humanity is gone. By the book the GM now runs them as an NPC, until therapy brings EMP back (Cyberware tab).</div>`:""}
   ${c.id==="sample"?`<div class="banner" style="margin-bottom:14px"><span class="chip amber">Example</span> This is a sample character so you can see how the sheet works. Rolls work; edits don't save. <button class="btn sm" data-act="copy-sample">Copy to my roster</button></div>`:""}
   ${rg("hdr",`<header class="sheet-head">
     <div class="portrait lg" style="background:${esc(c.color||"#3d4352")}">${esc((c.handle||c.name||"?").charAt(0).toUpperCase())}</div>
@@ -187,7 +188,7 @@ function viewSheet(c){
       <div class="sub">${c.name?`<span>${esc(c.name)}</span>`:""}${c.age?`<span>· age ${esc(c.age)}</span>`:""}${c.id!=="sample"?`<span class="faint">· saved ${ago(c.updatedAt)}</span>`:""}</div>
       <div class="row" style="gap:6px;margin-top:8px"><button class="btn sm" data-act="print-char">Paper sheet / PDF</button><button class="btn sm" data-act="download-char">Download file</button><button class="btn sm ghost ${guideOn(c)?"blue":""}" data-act="toggle-guide">${guideOn(c)?"Hide tips":"Show tips"}</button>${ed?`<button class="btn sm ghost" data-act="open-modal" data-m="backups">History</button><button class="btn sm ghost" data-act="reopen-wiz">Edit build</button><button class="btn sm ghost ${ui.adjust?"blue":""}" data-act="toggle-adjust">${ui.adjust?"Done adjusting":"Adjust stats"}</button>`:""}</div></div>
     <div class="hstats">
-      <div><span class="label">Rep</span><div class="row" style="gap:6px;flex-wrap:nowrap"><b class="num">${c.rep||0}</b>${ed?`<span class="row" style="gap:2px;flex-wrap:nowrap"><button class="icon-btn" style="width:22px;height:22px" data-act="num" data-f="rep" data-d="-1" aria-label="Lower rep">−</button><button class="icon-btn" style="width:22px;height:22px" data-act="num" data-f="rep" data-d="1" aria-label="Raise rep">+</button></span>`:""}</div></div>
+      <div title="${esc(repText(c.rep))}"><span class="label">Rep${c.repCoward?" · coward":""}</span><div class="row" style="gap:6px;flex-wrap:nowrap"><b class="num">${c.repCoward?"−":""}${c.rep||0}</b><button class="icon-btn" style="width:22px;height:22px" data-act="rep-known" aria-label="Does someone know you? Roll 1D10 against your Rep" title="Has someone heard of you? (1D10 ≤ Rep)">?</button>${ed?`<span class="row" style="gap:2px;flex-wrap:nowrap"><button class="icon-btn" style="width:22px;height:22px" data-act="num" data-f="rep" data-d="-1" aria-label="Lower rep">−</button><button class="icon-btn" style="width:22px;height:22px" data-act="num" data-f="rep" data-d="1" aria-label="Raise rep">+</button></span>`:""}</div></div>
       <div><span class="label">IP free</span><b class="num">${ipAvail}</b></div>
       <div><span class="label">Cash</span><b class="num">${(c.eb||0).toLocaleString("en-US")}<small style="font-size:14px">eb</small></b></div>
       <div><span class="label">Humanity</span><b class="num" style="color:${k.eff.EMP<=2?"var(--red)":"inherit"}">${k.humanity}</b></div>
@@ -234,6 +235,7 @@ function tabSkills(c,k,ed){
     <div class="seg" role="group" aria-label="Show"><button class="${ui.skFilter==="trained"?"on":""}" data-act="sk-filter" data-v="trained">Trained</button><button class="${ui.skFilter==="all"?"on":""}" data-act="sk-filter" data-v="all">All skills</button></div>
     <input id="sk-search" data-ui="skSearch" data-rerender value="${esc(ui.skSearch)}" placeholder="Search skills" aria-label="Search skills">
     <button class="btn sm primary" data-act="ck-open">Skill check…</button>
+    <button class="btn sm" data-act="open-modal" data-m="facedown">Facedown…</button>
     <label class="row" style="gap:6px"><span class="label">Target</span><select data-act-change="set-dv" aria-label="Difficulty value">${DVS.map(x=>`<option value="${x[0]}" ${String(ui.dv)===String(x[0])?"selected":""}>${x[1]||"No DV"}</option>`).join("")}</select></label>
     ${ed?`<button class="btn sm" data-act="open-modal" data-m="addskill">+ Custom skill</button>`:""}
   </div>
@@ -246,7 +248,7 @@ function tabSkills(c,k,ed){
     ${groups[g].sort().map(n=>{const def=skillDef(c,n);const lv=skillLevel(c,n);const s=sk(c,n);const base=(k.eff[def.s]||0)+lv;const cost=ipCost(c,n);
       const pips=Array.from({length:10},(_,i)=>`<i class="${i<s.c?"c":i<s.c+s.p?"p":i<lv?"b":""}"></i>`).join("");
       return `<div class="sk ${lv?"":"zero"}"><div class="nm">${esc(n)}${def.m>1?`<em>×${def.m}</em>`:""}${def.custom&&ed?` <button class="btn sm ghost" style="padding:0 4px" data-act="del-skill" data-n="${esc(n)}" aria-label="Remove ${esc(n)}">×</button>`:""}<div class="pips" title="career / pickup / improved">${pips}</div></div>
-        <span class="lv num">${lv}</span>
+        <span class="lv num">${lv}${chipLevel(c,n)!=null?`<small class="chipmark" title="A skill chip sets this level (natural ${skillNatural(c,n)})">chip</small>`:""}</span>
         <div class="acts">${ed&&ui.adjust?`<button class="icon-btn" data-act="adj-skill" data-n="${esc(n)}" data-d="-1" aria-label="Lower">−</button><button class="icon-btn" data-act="adj-skill" data-n="${esc(n)}" data-d="1" aria-label="Raise">+</button>`:""}
         ${ed&&!ui.adjust&&lv<10?`<button class="rollbtn" data-act="buy-skill" data-n="${esc(n)}" ${ipAvail<cost?"disabled style='opacity:.4'":""} title="Improve for ${cost} IP">+${cost}</button>`:""}
         <button class="rollbtn" data-act="roll-skill" data-n="${esc(n)}"><b>${base}</b>+D10</button></div></div>`}).join("")}</div>`)),gs.map(g=>groups[g].length+2)):`<p class="faint">No skills match.</p>`)(order.filter(g=>groups[g]))}`;
@@ -283,7 +285,7 @@ function tabCombat(c,k,ed){
         <select data-act-change="dmg-cover" aria-label="Cover" style="max-width:190px"><option value="">No cover</option>${COVER.map(([n,v])=>`<option value="${v}|${esc(n)}" ${ui.dmg.cover===v+"|"+n?"selected":""}>Behind ${esc(n.toLowerCase())} (SP ${v})</option>`).join("")}</select>
         <button class="btn" data-act="dmg-calc">Calculate</button>
       </div>
-      ${res?`<div class="calc-out"><div>${esc(res.text)}</div>${res.wounds>0&&ed?`<div class="row"><button class="btn primary sm" data-act="dmg-apply">Apply ${res.wounds} damage${res.ablate?" and ablate armor":""}</button><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`:`<div><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`}</div>`:""}
+      ${res?`<div class="calc-out"><div>${esc(res.text)}</div>${(res.wounds>0||res.sdp>0)&&ed?`<div class="row"><button class="btn primary sm" data-act="dmg-apply">${res.sdp?`Apply ${res.sdp} to the cyberlimb`:`Apply ${res.wounds} damage${res.ablate?" and ablate armor":""}`}</button><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`:`<div><button class="btn sm ghost" data-act="dmg-clear">Dismiss</button></div>`}</div>`:""}
     </div></section>
     <section class="panel"><div class="panel-h"><h3>Armor worn</h3>${ed?`<div class="row"><button class="btn sm" data-act="open-modal" data-m="shop" data-tab="Armor">+ From catalog</button><button class="btn sm ghost" data-act="add-blank" data-list="armor">+ Custom</button></div>`:""}</div><div class="panel-b items" style="padding-block:0">
       ${c.armor.length?c.armor.map((a,i)=>{const dm=Object.entries(a.dmg||{}).filter(x=>x[1]>0);return `<div class="it" data-info="own:armor:${esc(a.id)}"><div style="min-width:0"><div class="t">${esc(a.name)} ${a.worn?`<span class="chip green">Worn</span>`:`<span class="chip ink">Stowed</span>`}</div>
@@ -309,15 +311,11 @@ function tabCyber(c,k,ed){
         <div style="text-align:right"><span class="label">Current EMP</span><div class="big-n num" style="color:${k.eff.EMP<=2?"var(--red)":"inherit"}">${k.eff.EMP}<span class="faint" style="font-size:24px"> / ${k.base.EMP}</span></div></div></div>
       <div class="hum-bar"><i style="width:${pct}%"></i>${Array.from({length:Math.max(0,k.base.EMP-1)},(_,j)=>`<span style="left:${(j+1)/k.base.EMP*100}%"></span>`).join("")}</div>
       <div class="row"><span class="chip ${warn[0]}">${warn[0]==="green"?"Stable":"Warning"}</span><span style="font-size:14px">${warn[1]}</span></div>
-      <div class="row faint" style="font-size:12.5px;gap:14px"><span>Humanity loss from chrome: ${k.hcLoss}</span><span>Every 10 points lost costs 1 EMP.</span>
+      <div class="row faint" style="font-size:12.5px;gap:14px"><span>Humanity loss from chrome: ${k.hcLoss}</span><span>Every 10 points lost costs 1 EMP.</span>${therapyHTML(c,k,ed)}
       ${ed?`<span class="row" style="gap:4px;margin-left:auto">Therapy / adjustments: <b class="mono">${sgn(Number(c.humanityAdj)||0)}</b><button class="icon-btn" data-act="num" data-f="humanityAdj" data-d="-1" aria-label="Lower">−</button><button class="icon-btn" data-act="num" data-f="humanityAdj" data-d="1" aria-label="Raise">+</button></span>`:""}</div>
     </div></section>
     <section class="panel"><div class="panel-h"><h3>Installed cyberware</h3>${ed?`<div class="row"><button class="btn sm" data-act="open-modal" data-m="shop" data-tab="Cyberware">+ From catalog</button><button class="btn sm ghost" data-act="add-blank" data-list="cyber">+ Custom</button></div>`:""}</div>
-      <div class="panel-b items" style="padding-block:0">
-      ${c.cyber.length?cats.map(cat=>`<div class="label" style="padding-top:12px">${esc(cat)}</div>${c.cyber.map((x,i)=>(x.cat||"Other")!==cat?"":`<div class="it" data-info="own:cyber:${esc(x.id)}"><div style="min-width:0"><div class="t">${esc(x.name)}</div>
-        <div class="m">HC ${esc(x.hc||"—")} → lost ${esc(x.hcLoss)} · ${fmtEb(x.cost)}${x.init?` · +${x.init} initiative`:""}${x.armor?` · SP ${x.armor.sp}`:""}${x.mods?Object.entries(x.mods).map(([m,v])=>` · ${sgn(v)} ${m}`).join(""):""}${x.notes?" · "+esc(x.notes):""}</div></div>
-        <div class="a">${ed?`<button class="btn sm ghost" data-act="edit-item" data-id="${x.id}">${ui.editItem===x.id?"Close":"Edit"}</button>`:""}</div>
-        ${ui.editItem===x.id&&ed?itemEditor(c,"cyber",i,[["name","Name","text"],["cat","Category","text"],["hc","HC dice","text"],["hcLoss","Humanity lost","number"],["cost","Cost","number"],["notes","Notes","text"]]):""}</div>`).join("")}`).join(""):`<p class="faint" style="padding:14px 0;margin:0">Meat only, so far.</p>`}
+      <div class="panel-b items" style="padding-block:0">${cyberListHTML(c,k,ed)}
     </div></section>
   </div>`;
 }
@@ -333,7 +331,7 @@ function tabGear(c,k,ed){
       <div class="panel-b items" style="padding-block:0">${c.gear.length?c.gear.map((g,i)=>`<div class="it"${GEAR_NOTES[g.name]||ITEM_DESC.g[g.name]||g.desc?` data-info="own:gear:${esc(g.id)}"`:""}><div style="min-width:0"><div class="t">${esc(g.name)}${Number(g.qty)>1?` <span class="faint mono">×${esc(g.qty)}</span>`:""}</div><div class="m">${fmtEb(g.cost)} each${g.notes?" · "+esc(g.notes):""}</div></div>
         <div class="a">${ed?`<button class="icon-btn" data-act="qty" data-i="${i}" data-d="-1" aria-label="Fewer">−</button><button class="icon-btn" data-act="qty" data-i="${i}" data-d="1" aria-label="More">+</button><button class="btn sm ghost" data-act="edit-item" data-id="${g.id}">${ui.editItem===g.id?"Close":"Edit"}</button>`:""}</div>
         ${ui.editItem===g.id&&ed?itemEditor(c,"gear",i,[["name","Name","text"],["qty","Qty","number"],["cost","Cost each","number"],["notes","Notes","text"]]):""}</div>`).join(""):`<p class="faint" style="padding:14px 0;margin:0">Empty pockets.</p>`}</div></section>
-    <section class="panel"><div class="panel-h"><h3>Lifestyle</h3><span class="mono">${fmtEb(monthly)}/month</span></div><div class="panel-b grid2">
+    <section class="panel"><div class="panel-h"><h3>Lifestyle</h3><span class="mono">${fmtEb(monthly)}/month</span></div><div class="panel-b grid2">${jobHTML(c,ed)}
       <div class="field"><label class="label" for="ls-h">Housing</label><input id="ls-h" data-f="lifestyle.housing" value="${esc(ls.housing)}" ${ed?"":"disabled"} placeholder="Cube hotel, apartment, corporate conapt"></div>
       <div class="field"><label class="label" for="ls-r">Rent (eb/month)</label><input id="ls-r" type="number" data-f="lifestyle.rent" value="${esc(ls.rent)}" ${ed?"":"disabled"}></div>
       <div class="field"><label class="label" for="ls-f">Food (eb/month)</label><input id="ls-f" type="number" data-f="lifestyle.food" value="${esc(ls.food)}" ${ed?"":"disabled"}></div>
@@ -412,16 +410,16 @@ Object.assign(A,{
   "roll-fast":()=>mutate(c=>{STAT_KEYS.forEach(k=>{let v;do{v=d(10)}while(v<=2);c.stats[k]=v});c.statPool=statSum(c)}),
   "stat-step":el=>mutate(c=>{const k=el.dataset.k;c.stats[k]=clamp((c.stats[k]||2)+Number(el.dataset.d),2,10)}),
   "career-step":el=>mutate(c=>{const n=el.dataset.n;if(!n)return;const s=c.skills[n]||(c.skills[n]={c:0,p:0,b:0});const dd=Number(el.dataset.d);
-    if(dd>0&&(careerUsed(c)>=40||skillLevel(c,n)>=10))return;s.c=clamp((s.c||0)+dd,0,10)}),
+    if(dd>0&&(careerUsed(c)>=40||skillNatural(c,n)>=10))return;s.c=clamp((s.c||0)+dd,0,10)}),
   "pickup-step":el=>mutate(c=>{const n=el.dataset.n;const s=c.skills[n]||(c.skills[n]={c:0,p:0,b:0});const dd=Number(el.dataset.d);
-    if(dd>0&&(pickupUsed(c)>=pickupPool(c)||skillLevel(c,n)>=10))return;s.p=Math.max(0,(s.p||0)+dd)}),
+    if(dd>0&&(pickupUsed(c)>=pickupPool(c)||skillNatural(c,n)>=10))return;s.p=Math.max(0,(s.p||0)+dd)}),
   "lp-all":()=>mutate(c=>rollLifepath(c)),
   "lp-style":()=>mutate(c=>rollStyle(c.lifepath)),
   "lp-family":()=>mutate(c=>rollFamily(c.lifepath)),
   "lp-motive":()=>mutate(c=>rollMotive(c.lifepath)),
   "lp-events":()=>mutate(c=>rollEvents(c.lifepath,c.age||18)),
   "lp-event":el=>mutate(c=>{const i=Number(el.dataset.i);const e=c.lifepath.events[i];c.lifepath.events[i]=lifeEvent(e.age)}),
-  "roll-funds":el=>mutate(c=>{const inc=Number(el.dataset.inc);const r=d(6);const months=Math.ceil(r/3);c.eb=inc*months;pushRoll({who:c.handle||"New runner",label:"Starting funds",detail:`1D6 = ${r} → ${months} month${months>1?"s":""} × ${fmtEb(inc)}`,total:c.eb,t:Date.now()})}),
+  "roll-funds":el=>mutate(c=>{const inc=Number(el.dataset.inc);const r=d(6);const months=Math.ceil(r/3);c.eb=inc*months;const u=d(6);c.unemployed=u>4;pushRoll({who:c.handle||"New runner",label:"Starting funds",detail:`1D6 = ${r} → ${months} month${months>1?"s":""} × ${fmtEb(inc)}. Job check 1D6 = ${u}: ${u>4?"you just got unemployed":"still employed"}.`,total:c.eb,t:Date.now()})}),
   "shop-tab":el=>{ui.shopTab=el.dataset.t;const p=document.getElementById("shop-detail");if(p){delete p.dataset.key;const c=curChar();p.innerHTML=`<p class="faint shop-hint">Point at an item, or tap its name, to see exactly what it does for ${esc((c&&c.handle)||"this runner")}.</p>`}renderModal()},
   "hc-mode":el=>{ui.hcMode=el.dataset.v;renderModal()},
   "buy":el=>{const c=curChar();if(!c||!canEditChar(c)){showNotice(c&&c.id==="sample"?"This is the example character. Copy it to your runners to edit.":"You can't change this character.");return}
@@ -430,7 +428,7 @@ Object.assign(A,{
       if(ex){ex.shots=String((Number(ex.shots)||0)+1);ex.ammo=(Number(ex.ammo)||0)+1;item=ex}else{item=mkWeapon(row);c.weapons.push(item)}}
     if(k==="a"){item=mkArmor(ARMOR[i]);cost=ARMOR[i][4];c.armor.push(item)}
     if(k==="g"){const g=GEAR[i];cost=g[1];const ex=c.gear.find(x=>x.name===g[0]);if(ex)ex.qty=(Number(ex.qty)||1)+1;else c.gear.push({id:uid(),name:g[0],qty:1,cost:g[1],notes:""});item={name:g[0]}}
-    if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item);{const cw=cyberWeapon(item);if(cw)c.weapons.push(cw)}if(ui.shopSurg)cost+=medSurgery(c,r)}
+    if(k==="c"){const r=CYBER[i];const why=cyBuyProblem(c,r);if(why){showNotice(why);return}cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);cyPlace(c,item);c.cyber.push(item);{const cw=cyberWeapon(item);if(cw)c.weapons.push(cw)}if(ui.shopSurg)cost+=medSurgery(c,r)}
     if(!ui.shopFree)c.eb=(Number(c.eb)||0)-cost;
     saveChar(c);renderModal();if(k!=="c")showNotice(`${ui.shopFree?"Added":"Bought"} ${item.name}.`);if(ui.view!=="roster")render();},
   "add-skill":()=>{const n=document.getElementById("ns-name").value.trim();const s=document.getElementById("ns-stat").value;const m=clamp(Number(document.getElementById("ns-mult").value)||1,1,5);
@@ -440,15 +438,15 @@ Object.assign(A,{
   "del-skill":el=>mutate(c=>{const n=el.dataset.n;c.customSkills=c.customSkills.filter(s=>s.n!==n);delete c.skills[n]}),
   "sk-filter":el=>{ui.skFilter=el.dataset.v;render()},
   "roll-stat":el=>{const c=curChar();const k=calc(c);const key=el.dataset.k;checkRoll(`${key} check`,k.eff[key],{dv:ui.dv})},
-  "roll-skill":el=>{const c=curChar();const k=calc(c);const n=el.dataset.n;const def=skillDef(c,n);let base=(k.eff[def.s]||0)+skillLevel(c,n);
+  "roll-skill":el=>{const c=curChar();const k=calc(c);const n=el.dataset.n;const def=skillDef(c,n);let base=(k.eff[def.s]||0)+skillLevel(c,n)+fxSkillBonus(c,n).total;
     if(n==="Awareness/Notice"&&c.role==="Solo")base+=skillLevel(c,"Combat Sense");
     checkRoll(`${n} (${def.s})`,base,{dv:ui.dv})},
-  "buy-skill":el=>mutate(c=>{const n=el.dataset.n;const cost=ipCost(c,n);const avail=(c.ip.total||0)-(c.ip.spent||0);if(avail<cost)return;const from=skillLevel(c,n);if(from>=10)return;
+  "buy-skill":el=>mutate(c=>{const n=el.dataset.n;const cost=ipCost(c,n);const avail=(c.ip.total||0)-(c.ip.spent||0);if(avail<cost)return;const from=skillNatural(c,n);if(from>=10)return;
     const s=c.skills[n]||(c.skills[n]={c:0,p:0,b:0});s.b=(s.b||0)+1;c.ip.spent=(c.ip.spent||0)+cost;(c.ipLog||(c.ipLog=[])).push({skill:n,from,to:from+1,cost,t:Date.now()})}),
   "undo-ip":()=>mutate(c=>{const l=(c.ipLog||[]).pop();if(!l)return;const s=c.skills[l.skill];if(s&&s.b>0)s.b--;c.ip.spent=Math.max(0,(c.ip.spent||0)-l.cost)}),
   "add-ip":()=>{const v=Number(document.getElementById("ip-add").value)||0;if(!v)return;mutate(c=>{c.ip.total=Math.max(0,(c.ip.total||0)+v)})},
   "adj-stat":el=>mutate(c=>{const k=el.dataset.k;c.stats[k]=clamp((c.stats[k]||0)+Number(el.dataset.d),1,20)}),
-  "adj-skill":el=>mutate(c=>{const n=el.dataset.n;const s=c.skills[n]||(c.skills[n]={c:0,p:0,b:0});const dd=Number(el.dataset.d);if(dd>0&&skillLevel(c,n)>=10)return;
+  "adj-skill":el=>mutate(c=>{const n=el.dataset.n;const s=c.skills[n]||(c.skills[n]={c:0,p:0,b:0});const dd=Number(el.dataset.d);if(dd>0&&skillNatural(c,n)>=10)return;
     if(dd>0)s.b=(s.b||0)+1;else{if(s.b>0)s.b--;else if(s.p>0)s.p--;else if(s.c>0)s.c--}}),
   "num":el=>mutate(c=>{const f=el.dataset.f;let v=(Number(getPath(c,f))||0)+Number(el.dataset.d);if(f==="wounds")v=clamp(v,0,40);if(f==="rep")v=clamp(v,0,10);if(f==="luckSpent")v=clamp(v,0,c.stats.LUCK||0);setPath(c,f,v)}),
   "set":el=>mutate(c=>setPath(c,el.dataset.f,Number(el.dataset.v))),
@@ -462,7 +460,7 @@ Object.assign(A,{
   "roll-dmg":el=>{const c=curChar();const k=calc(c);const w=c.weapons[Number(el.dataset.i)];exprRoll(`Damage · ${w.name}`,w.dmg,w.type==="MEL"?k.melee:0)},
   "ammo":el=>mutate(c=>{const w=c.weapons[Number(el.dataset.i)];const shots=Number(w.shots)||0;if(el.dataset.d==="reload")w.ammo=shots;else w.ammo=clamp((Number(w.ammo)||0)+Number(el.dataset.d),0,shots)}),
   "edit-item":el=>{ui.editItem=ui.editItem===el.dataset.id?null:el.dataset.id;ui.confirm=null;render()},
-  "del-item":el=>{const c=curChar();const list=el.dataset.list,i=Number(el.dataset.i);const it=c[list][i];if(ui.confirm!==it.id){ui.confirm=it.id;render();return}mutate(c=>{c[list].splice(i,1);if(list==="cyber")c.weapons=(c.weapons||[]).filter(w=>w.cyber!==it.id);ui.confirm=null;ui.editItem=null})},
+  "del-item":el=>{const c=curChar();const list=el.dataset.list,i=Number(el.dataset.i);const it=c[list][i];if(ui.confirm!==it.id){ui.confirm=it.id;render();return}mutate(c=>{c[list].splice(i,1);if(list==="cyber"){c.weapons=(c.weapons||[]).filter(w=>w.cyber!==it.id);c.cyber.forEach(x=>{if(x.on===it.id)delete x.on})}ui.confirm=null;ui.editItem=null})},
   "add-blank":el=>mutate(c=>{const l=el.dataset.list;const id=uid();
     if(l==="weapons")c.weapons.push({id,name:"New weapon",type:"P",wa:0,conc:"J",avail:"C",dmg:"2D6",shots:10,ammo:10,rof:"2",rel:"ST",range:"50m",cost:0,skill:"Handgun"});
     if(l==="armor")c.armor.push({id,name:"New armor",sp:10,locs:["torso"],ev:0,cost:0,worn:true,dmg:{}});
@@ -479,6 +477,7 @@ Object.assign(A,{
   "dmg-calc":()=>{const c=curChar();const k=calc(c);const amt=Number(document.getElementById("dmg-amt").value)||0;ui.dmg.amount=amt||"";if(!amt){showNotice("Enter the damage rolled first.");return}
     const loc=ui.dmg.loc;const outerA=c.armor.filter(a=>a.worn&&a.locs.includes(loc)).sort((a,b)=>b.sp-a.sp)[0];const cov=ui.dmg.cover?Number(String(ui.dmg.cover).split("|")[0]):0;
     let sp=hitSP(spAt(c,loc),{ap:ui.dmg.ap,mono:ui.dmg.mono,hard:!!(outerA&&HARD_ARMOR.test(outerA.name)),cover:cov});const locName=LOCS.find(l=>l[0]===loc)[1];
+    const limb=limbAt(c,loc);if(limb&&limbState(c,limb)!=="destroyed"){const lh=limbHit(c,limb,amt,sp,ui.dmg.ap);ui.dmg.result={text:lh.text,wounds:0,limb:limb.id,sdp:lh.pen};render();return}
     let pen=amt-sp;if(pen<=0){ui.dmg.result={text:`${amt} damage vs SP ${sp}${cov?" (armor and cover)":""} at the ${locName}: stopped${cov?"":" by armor"}. No wounds.`,wounds:0};render();return}
     let steps=[`${amt} − SP ${sp} = ${pen}`];
     if(ui.dmg.ap){pen=Math.max(1,Math.floor(pen/2));steps.push(`AP halves → ${pen}`)}
@@ -487,7 +486,7 @@ Object.assign(A,{
     const outer=c.armor.filter(a=>a.worn&&a.locs.includes(loc)).slice(-1)[0];
     let note="";if(fin>8&&loc!=="torso")note=loc==="head"?" Over 8 to the head: instant death unless the GM rules otherwise.":" Over 8 to a limb: the limb is severed or crushed. Make a death save at Mortal 0.";
     ui.dmg.result={text:`${locName}: ${steps.join(" · ")}. Takes ${fin} damage.${note}`,wounds:fin,ablate:outer?outer.id:null,loc};render()},
-  "dmg-apply":()=>mutate(c=>{const r=ui.dmg.result;if(!r)return;c.wounds=clamp((c.wounds||0)+r.wounds,0,40);if(r.ablate){const a=c.armor.find(x=>x.id===r.ablate);if(a){a.dmg=a.dmg||{};a.dmg[r.loc]=(a.dmg[r.loc]||0)+1}}ui.dmg.result=null;ui.dmg.amount=""}),
+  "dmg-apply":()=>mutate(c=>{const r=ui.dmg.result;if(!r)return;if(r.limb){const h=c.cyber.find(x=>x.id===r.limb);if(h)h.sdpDmg=(Number(h.sdpDmg)||0)+r.sdp;ui.dmg.result=null;ui.dmg.amount="";return}c.wounds=clamp((c.wounds||0)+r.wounds,0,40);if(r.ablate){const a=c.armor.find(x=>x.id===r.ablate);if(a){a.dmg=a.dmg||{};a.dmg[r.loc]=(a.dmg[r.loc]||0)+1}}ui.dmg.result=null;ui.dmg.amount=""}),
   "dmg-clear":()=>{ui.dmg.result=null;render()},
   "print-char":el=>{const id=el.dataset.id;const c=id?(id===SAMPLE.id?SAMPLE:S.chars.get(id)):curChar();if(c)printCharacter(c)},
   "print-blank":()=>printBlank(),

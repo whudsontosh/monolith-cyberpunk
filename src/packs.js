@@ -74,9 +74,9 @@ function sanitizeFx(fx){const o={};if(!fx||typeof fx!=="object")return o;
   if(Array.isArray(fx.ctrl))o.ctrl=fx.ctrl.filter(v=>REMOTE_KINDS.includes(v));
   return o}
 function sanitizeProgram(x,name){return {name:name||pkStr(x&&x.name)||"Program",cls:PROG_CLASSES.includes(x.cls)?x.cls:"Utility",str:pkNum(x.str,0,10,3),mu:pkNum(x.mu,0,40,1),cost:pkNum(x.cost,0,1e7,0),ice:!!x.ice,fx:sanitizeFx(x.fx),desc:pkText(x.desc)}}
-function sanitizeShop(raw){const out={hide:{w:[],a:[],c:[],g:[],p:[],d:[]},price:{w:{},a:{},c:{},g:{},p:{},d:{}},locked:false,vendor:""};if(!raw||typeof raw!=="object")return out;
+function sanitizeShop(raw){const out={hide:{w:[],a:[],c:[],g:[],p:[],d:[],dr:[],bs:[]},price:{w:{},a:{},c:{},g:{},p:{},d:{},dr:{},bs:{}},locked:false,vendor:""};if(!raw||typeof raw!=="object")return out;
   out.locked=!!raw.locked;out.vendor=pkStr(raw.vendor,60);
-  for(const k of ["w","a","c","g","p","d"]){out.hide[k]=[...new Set((Array.isArray(raw.hide&&raw.hide[k])?raw.hide[k]:[]).map(n=>pkStr(n,80)).filter(Boolean))].slice(0,3000);
+  for(const k of ["w","a","c","g","p","d","dr","bs"]){out.hide[k]=[...new Set((Array.isArray(raw.hide&&raw.hide[k])?raw.hide[k]:[]).map(n=>pkStr(n,80)).filter(Boolean))].slice(0,3000);
     const pr=raw.price&&raw.price[k];if(pr&&typeof pr==="object")Object.entries(pr).slice(0,3000).forEach(([n,v])=>{n=pkStr(n,80);if(n)out.price[k][n]=pkNum(v,0,1e7,0)})}
   return out}
 function shopIsDefault(s){return !s||["w","a","c","g","p","d"].every(k=>!(s.hide&&s.hide[k]||[]).length&&!Object.keys(s.price&&s.price[k]||{}).length)}
@@ -124,8 +124,8 @@ function stampHomebrew(c,packs){if(!c||c.id==="sample")return;const hb={roles:{}
 function BASE_SKILL(n){return SKILL_DEFS.slice(0,BASE_RULES.skills).some(d0=>d0[0]===n)}
 
 /* ---------- campaign shop ---------- */
-const SHOP_LISTS={w:()=>WEAPONS,a:()=>ARMOR,c:()=>CYBER,g:()=>GEAR,p:()=>PROGRAMS.filter(r=>!r.ice),d:()=>DECKS};
-const SHOP_COST_IX={w:10,a:4,c:2,g:1,p:4,d:5};
+const SHOP_LISTS={w:()=>WEAPONS,a:()=>ARMOR,c:()=>CYBER,g:()=>GEAR,p:()=>PROGRAMS.filter(r=>!r.ice),d:()=>DECKS,dr:()=>DRUGS.map(x=>[x.name,x.pack?x.packCost:x.cost]),bs:()=>BODYSHOP};
+const SHOP_COST_IX={w:10,a:4,c:2,g:1,p:4,d:5,dr:1,bs:1};
 function shopHidden(shop,kind,name){return !!(shop&&shop.hide&&(shop.hide[kind]||[]).includes(name))}
 function shopPrice(shop,kind,row){const o=shop&&shop.price&&shop.price[kind];const n=row[0];return o&&o[n]!=null?o[n]:row[SHOP_COST_IX[kind]]}
 

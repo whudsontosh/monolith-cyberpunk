@@ -33,6 +33,8 @@ async def main():
         await pl.screenshot(path=os.path.join(SHOTS,"gear.png"))
         # cyberweapons in the Attack window
         await pl.click("[data-act=shop-tab][data-t=Cyberware]");await pl.wait_for_timeout(150)
+        ok("needs a cyberarm" in (await J("cyBuyProblem(curChar(),CYBER.find(r=>r[0]==='Hammer hand'))")).lower(),"a Hammer hand needs a cyberarm to go on")
+        ia=await J("CYBER.findIndex(r=>r[0]==='Cyberarm')");await pl.click(f"[data-act=buy][data-k=c][data-i='{ia}']");await pl.wait_for_timeout(100)
         i=await J("CYBER.findIndex(r=>r[0]==='Hammer hand')");await pl.click(f"[data-act=buy][data-k=c][data-i='{i}']");await pl.wait_for_timeout(100)
         i2=await J("CYBER.findIndex(r=>r[0]==='Micro-missile launcher')");await pl.click(f"[data-act=buy][data-k=c][data-i='{i2}']");await pl.wait_for_timeout(100)
         w=await J("curChar().weapons.find(w=>w.name==='Hammer hand')")

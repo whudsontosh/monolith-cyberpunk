@@ -225,6 +225,20 @@ async def main():
         await gm.evaluate("window.__seq=[10,1];rollDice=e=>({total:6,text:'6'});0");await gm.click("[data-act=ni-act]");await gm.wait_for_timeout(400);await gm.evaluate("rollDice=window.__rd")
         sp=await gm.evaluate("Object.values(netRun().runners)[0].progs.filter(p=>p.derez).map(p=>p.name)");print(sp)
         ok("Imp" in sp and "Killer IV" in sp,"the system's Killer goes for the Demon first; the Imp de-rezzes with its subroutine")
+        # defences move 5 spaces a turn too, unless the GM overrides
+        wp=await gm.evaluate(f"(()=>{{const i=netRun().ice.find(i=>i.id==='{wd}');ui.netISel=i.id;ui.netFree=false;render();return [i.x,i.y,[...fortReach(netRun().fort,runState(netRun()),i.x,i.y,5).keys()].length]}})()");await gm.wait_for_timeout(100)
+        far=await gm.evaluate(f"(()=>{{const run=netRun();const i=run.ice.find(i=>i.id==='{wd}');const R=fortReach(run.fort,runState(run),i.x,i.y,9);for(const [k,dd] of R)if(dd>5){{const [x,y]=k.split(',').map(Number);return [x,y]}}return null}})()")
+        ok(await gm.locator(".ng .reach").count()>0,"selecting a defence lights up its 5-space reach")
+        if far:
+            await gm.click(f"[data-act=nr-cell][data-x='{far[0]}'][data-y='{far[1]}']");await gm.wait_for_timeout(150)
+            ok(await gm.evaluate(f"(()=>{{const i=netRun().ice.find(i=>i.id==='{wd}');return [i.x,i.y]}})()")==wp[:2],"a defence can't move more than 5 spaces")
+            await gm.evaluate("ui.netFree=true;render()");await gm.wait_for_timeout(100)
+            await gm.click(f"[data-act=nr-cell][data-x='{far[0]}'][data-y='{far[1]}']");await gm.wait_for_timeout(150)
+            ok(await gm.evaluate(f"(()=>{{const i=netRun().ice.find(i=>i.id==='{wd}');return [i.x,i.y]}})()")==far,"unless the GM overrides")
+            await gm.evaluate(f"(()=>{{const i=netRun().ice.find(i=>i.id==='{wd}');i.x={wp[0]};i.y={wp[1]};ui.netFree=false;ui.netISel=null;netChanged()}})()")
+        else: ok(False,"found a square more than 5 away")
+        await gm.evaluate("(()=>{const c=netRun().fort.cells[fkey(11,12)];c.files[0].eb=2500})()")
+        eb0=await gm.evaluate("st.party.find(c=>c.handle==='Spider').eb")
         # read a memory and copy a file
         await gm.click("[data-act=nr-next]");await gm.wait_for_timeout(150)
         await gm.evaluate("(()=>{const r=Object.values(netRun().runners)[0];r.x=11;r.y=11;netChanged()})()");await pl.wait_for_timeout(400)
@@ -233,6 +247,7 @@ async def main():
         await gm.click("[data-act=nr-next]");await gm.wait_for_timeout(150)
         await pl.click("[data-act=pn-copy] >> nth=0");await pl.wait_for_timeout(600)
         ok("Security rota" in await gm.evaluate("st.party.find(c=>c.handle==='Spider').notes"),"copying a file writes it into the runner's notes")
+        ok(await gm.evaluate("st.party.find(c=>c.handle==='Spider').eb")==eb0+2500 and "2,500eb" in await gm.evaluate("netRun().log.map(l=>l.text).join(' ')"),"a file with money in it pays the runner who copies it")
         await pl.wait_for_timeout(400);ok("Security rota" in await pl.evaluate("[...S.chars.values()].find(c=>c.handle==='Spider').notes"),"which reach the player")
         await pl.screenshot(path=shot("player-net-3.png"))
         await gm.screenshot(path=shot("gm-run-2.png"),full_page=True)

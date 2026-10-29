@@ -47,7 +47,7 @@ function healRate(c){return healParts(c).rate}
 function daysToHeal(c){const r=healRate(c);const w=medDmg(c);if(!w)return 0;if(r<=0)return null;return Math.ceil(Math.max(0,w-(Number(medOf(c).carry)||0))/r-1e-9)}
 /* n days pass. Treated patients heal at their rate; untreated ones take 2 points a day from infection and
    shock, and make a daily death save while mortal. Effects that last days count down; shorter ones end. */
-function medDays(c,n){const m=medEnsure(c);n=clamp(Math.round(Number(n)||1),1,365);const lines=[];let healed=0,days=0;
+function medDays(c,n){const m=medEnsure(c);n=clamp(Math.round(Number(n)||1),1,365);const lines=[];let healed=0,days=0;if(c.adrenalUsed)c.adrenalUsed=0;
   c.fx=(c.fx||[]).filter(f=>f.perm||Number(f.days)>0);
   for(let i=1;i<=n;i++){if(m.dead||m.gone)break;const w=medDmg(c);if(!w){if(m.treat)medHealedUp(m);break}days=i;
     if(!m.treat){const st=medStable(c);c.wounds=clamp(w+2,0,40);if(st)m.stabW=c.wounds;const k=calc(c);let t=`Day ${i}: untreated, so infection and shock do 2 damage (${woundLabel(k.level)}, ${k.w}).`;
@@ -95,21 +95,27 @@ function drugDiff(dr){if(dr.book)return Number(dr.diff)||2;const base=(dr.fx||[]
   return Math.max(2,base+clamp(Number(dr.str)||1,1,3)-side)*((DRUG_DUR.find(x=>x[0]===dr.dur)||DRUG_DUR[0])[2])}
 function drugCost(dr){return dr.book?Number(dr.cost)||0:drugDiff(dr)*25}
 function drugBook(name){const b=DRUG_BY_NAME[name];return b?{...clone(b),book:true}:null}
-function drugEffects(dr){const s=Number(dr.str)||1;const mods={};let stun=0,heal=0;const notes=[];
+// skill and save bonuses a drug gives while it runs (the skill check adds them)
+const DRUG_SKILL_FX={aware:["Awareness/Notice",1],depress:["Awareness/Notice",-1],endur:["Endurance",1]};
+const DRUG_SAVE_FX={antidote:["poison",1],antibio:["disease",1],sopor:["sleep",-1]};
+function drugEffects(dr){const s=Number(dr.str)||1;const mods={};let stun=0,heal=0;const notes=[];const skills={},saves={};
   const add=(k,v)=>mods[k]=(mods[k]||0)+v;
   if(dr.mods)for(const [k,v] of Object.entries(dr.mods))add(k,Number(v)||0);
   (dr.fx||[]).forEach(id=>{const e=DRUG_EFFECTS.find(x=>x[0]===id);if(!e)return;
     if(id==="ref"&&!dr.book)add("REF",s);else if(id==="int"&&!dr.book)add("INT",s);else if(id==="cool"&&!dr.book)add("COOL",s);
-    else if(id==="pain"||id==="stun")stun+=s;else if(id==="heal")heal+=s;else notes.push(e[1]+(e[3]?` (${e[3].replace(/Strength/g,String(s))})`:""))});
+    else if(id==="pain"||id==="stun")stun+=s;else if(id==="heal")heal+=s;
+    else if(DRUG_SKILL_FX[id]){const [sk,m]=DRUG_SKILL_FX[id];skills[sk]=(skills[sk]||0)+m*s}
+    else if(DRUG_SAVE_FX[id]){const [sv,m]=DRUG_SAVE_FX[id];saves[sv]=(saves[sv]||0)+m*s}
+    else notes.push(e[1]+(e[3]?` (${e[3].replace(/Strength/g,String(s))})`:""))});
   (dr.sides||[]).forEach(id=>{if(id==="lref")add("REF",-1);else if(id==="lint")add("INT",-1);else if(id==="tremor")add("REF",-2);
     else if(!["death","nerve","steril","cancer","aggro"].includes(id)){const e=DRUG_SIDES.find(x=>x[0]===id);if(e)notes.push(e[1])}});
-  return {mods,stun,heal,notes}}
-function drugSummary(dr){const e=drugEffects(dr);const bits=[...Object.entries(e.mods).map(([k,v])=>`${sgn(v)} ${k}`),e.stun?`${sgn(e.stun)} Stun saves`:"",e.heal?`+${e.heal} healing a day`:"",...e.notes].filter(Boolean);
+  return {mods,stun,heal,notes,skills,saves}}
+function drugSummary(dr){const e=drugEffects(dr);const bits=[...Object.entries(e.mods).map(([k,v])=>`${sgn(v)} ${k}`),e.stun?`${sgn(e.stun)} Stun saves`:"",e.heal?`+${e.heal} healing a day`:"",...fxBonusBits(e),...e.notes].filter(Boolean);
   return bits.join(", ")||"No game effect"}
 /* take one dose: rolls the duration and every side effect the book calls for, and starts the effect */
 function drugTake(c,dr){const m=medEnsure(c);const k=calc(c);const lines=[];const s=Number(dr.str)||1;
   const unit=(DRUG_DUR.find(x=>x[0]===dr.dur)||DRUG_DUR[0]);const n=d(6)+1;const e=drugEffects(dr);
-  const fx={id:uid(),name:dr.name,mods:e.mods,stun:e.stun,heal:e.heal,until:`${n} ${unit[0]==="turns"?"turns":unit[0]}`,notes:e.notes.join(", "),addict:(dr.sides||[]).filter(x=>x==="psych"||x==="phys")};
+  const fx={id:uid(),name:dr.name,mods:e.mods,stun:e.stun,heal:e.heal,skills:e.skills,saves:e.saves,until:`${n} ${unit[0]==="turns"?"turns":unit[0]}`,notes:e.notes.join(", "),addict:(dr.sides||[]).filter(x=>x==="psych"||x==="phys")};
   lines.push(`Lasts ${n} ${unit[0]} (1D6+1).`);
   if(dr.special==="speedheal"){m.speedheal=true;const r=Math.ceil(d(6)/3);fx.mods={};fx.until="while healing";
     c.fx=(c.fx||[]).filter(f=>f.name!=="Speedheal: −REF");c.fx.push({id:uid(),name:"Speedheal: −REF",mods:{REF:-r},days:7,until:"1 week",notes:"Side effect of speedheal"});
@@ -124,7 +130,7 @@ function drugTake(c,dr){const m=medEnsure(c);const k=calc(c);const lines=[];cons
     if(id==="cancer")lines.push(r<=3?`Carcinogenic (1D10 = ${r}): develops cancer. 1 point of permanent damage unless cured.`:`Carcinogenic (1D10 = ${r}): no cancer.`);
     if(id==="aggro")lines.push(r<=5?`Aggression (1D10 = ${r}): picks a fight with the nearest person.`:`Aggression (1D10 = ${r}): keeps it together.`)});
   if(fx.addict.length)lines.push(`Addictive: an hourly ${fx.addict.map(x=>x==="psych"?"COOL":"BODY").join(" and ")} check after the last dose.`);
-  if(Object.keys(fx.mods).length||fx.stun||fx.heal||fx.notes||dr.special!=="speedheal")c.fx=[...(c.fx||[]),fx];
+  if(Object.keys(fx.mods).length||fx.stun||fx.heal||fx.notes||Object.keys(fx.skills).length||Object.keys(fx.saves).length||dr.special!=="speedheal")c.fx=[...(c.fx||[]),fx];
   return lines}
 function drugCarried(c){return (c.gear||[]).filter(g=>g.drug&&(Number(g.qty)||0)>0)}
 
@@ -188,7 +194,7 @@ function medTTHTML(c,k,ctx){const m=medOf(c);const ed=ctx.ed;const cov=m.tt||"";
   const btns=ed?`<div class="row" style="gap:6px;flex-wrap:wrap">${m.ttEta?medBtn(c,"med-ttarrive","They're here"):medBtn(c,"med-ttcall","Call Trauma Team","","btn sm danger")}${m.ttBill?medBtn(c,"med-ttbill",`Pay the bill (${m.ttBill} min · ${fmtEb(m.ttBill*MED_COST.ttMinute)})`):""}${cov==="account"?medBtn(c,"med-ttpay",`Pay this month (${fmtEb(MED_COST.ttMonth)})`,"","btn sm ghost"):""}</div>`:"";
   return `<section class="panel"><div class="panel-h"><h3>Trauma Team™</h3></div><div class="panel-b med-grid">${sel}${call}${btns}<p class="faint med-p">Dial 911 or bend a Trauma card. They arrive within 1D6+1 minutes, secure the area, and stabilize with +3. Not obliged to take you to a hospital.</p></div></section>`}
 function medFxHTML(c,ctx){const fx=c.fx||[];if(!fx.length)return "";
-  return `<div class="med-fx">${fx.map(f=>{const bits=[...Object.entries(f.mods||{}).map(([k,v])=>`${sgn(v)} ${k}`),f.stun?`${sgn(f.stun)} Stun saves`:"",f.heal?`+${f.heal} healing a day`:"",f.notes||""].filter(Boolean).join(", ");
+  return `<div class="med-fx">${fx.map(f=>{const bits=[...Object.entries(f.mods||{}).map(([k,v])=>`${sgn(v)} ${k}`),f.stun?`${sgn(f.stun)} Stun saves`:"",f.heal?`+${f.heal} healing a day`:"",...fxBonusBits(f),f.notes||""].filter(Boolean).join(", ");
     return `<div class="it"><div style="min-width:0"><div class="t">${esc(f.name)}</div><div class="m">${esc(bits||"No game effect")}${f.until?` · ${esc(f.until)}${Number(f.days)?` (${f.days} day${f.days===1?"":"s"} left)`:""}`:""}</div></div>
       ${ctx.ed?`<div class="row" style="gap:4px">${(f.addict||[]).map(a=>medBtn(c,"med-crave",a==="psych"?"COOL check":"BODY check",`data-fid="${esc(f.id)}" data-v="${a}"`,"btn sm ghost")).join("")}${medBtn(c,"med-fxoff","Wore off",`data-fid="${esc(f.id)}"`,"btn sm ghost")}</div>`:""}</div>`}).join("")}</div>`}
 
@@ -252,3 +258,19 @@ function medRefTables(t){return `
   ${t("Drug designer: effects",["Effect","Diff"],DRUG_EFFECTS.map(x=>[`${x[1]}${x[3]?` (${x[3]})`:""}`,x[2]]))}
   ${t("Drug designer: side effects",["Side effect","Takes off"],DRUG_SIDES.map(x=>[x[1],"−"+x[2]]))}
   ${t("Drug designer: totals",["Step","Rule"],[["Difficulty","(effects + Strength 1–3 − side effects, at least 2) × duration"],["Duration","1D6+1 turns ×1 · minutes ×2 · hours ×3"],["Cost","Difficulty × 25eb a dose"],["Making it","TECH + Pharmaceuticals + 1D10 vs the Difficulty"]])}`}
+
+/* ============================== BONUSES TO ONE SKILL OR SAVE (1.1.4) ==============================
+   Running effects can add to a single skill (Stim's Endurance, enhanced perception's Awareness) or to saves
+   against poison, disease or sleep. Toxin binders give +4 against poison and drugs, nasal filters +4 against gas. */
+const SAVE_NAMES={poison:"poison and drugs",disease:"disease",sleep:"sleep drugs",gas:"gas"};
+function fxBonusBits(f){return [...Object.entries(f.skills||{}).map(([k,v])=>`${sgn(v)} ${k}`),...Object.entries(f.saves||{}).map(([k,v])=>`${sgn(v)} saves vs ${SAVE_NAMES[k]||k}`)]}
+function fxSkillBonus(c,name){const parts=[];(c&&c.fx||[]).forEach(f=>{const v=Number((f.skills||{})[name]);if(v)parts.push([f.name,v])});return {total:parts.reduce((a,p)=>a+p[1],0),parts}}
+function saveBonus(c,kind){const parts=[];(c.fx||[]).forEach(f=>{const v=Number((f.saves||{})[kind]);if(v)parts.push([f.name,v])});
+  (c.cyber||[]).filter(x=>!x.off).forEach(x=>{const n=x.name||"";if(/^Toxin binders/i.test(n)&&(kind==="poison"||kind==="gas"))parts.push(["Toxin binders",4]);if(/^Nasal filters/i.test(n)&&kind==="gas")parts.push(["Nasal filters",4])});
+  return {total:parts.reduce((a,p)=>a+p[1],0),parts}}
+/* a save against poison, drugs, gas, disease or sleep: 1D10 at or under BODY plus bonuses; a success halves a poison's damage */
+function medSaveRoll(c,kind){const k=calc(c);const b=saveBonus(c,kind);const need=k.eff.BODY+b.total;const r=d(10);const ok=r<=need;
+  return Dice.raw(`${whoOf(c)}: save vs ${SAVE_NAMES[kind]||kind}`,`1D10 = ${r} vs ≤ BODY ${k.eff.BODY}${b.parts.map(p=>` ${sgn(p[1])} ${p[0]}`).join("")} = ${need}: ${ok?"resists (poison damage halved)":"fails"}.`,r,whoOf(c),[{t:ok?"Resists":"Fails",c:ok?"green":"red"}])}
+function medSavesHTML(c,ctx){if(!ctx.ed)return "";const kinds=["poison","gas","disease","sleep"];
+  return `<div class="row" style="gap:6px;flex-wrap:wrap"><span class="label">Saves</span>${kinds.map(k=>{const b=saveBonus(c,k).total;return medBtn(c,"med-save",`vs ${SAVE_NAMES[k]}${b?` (${sgn(b)})`:""}`,`data-v="${k}"`,"btn sm ghost")}).join("")}</div>`}
+Object.assign(A,{"med-save":el=>medEdit(el.dataset.id,c=>{medSaveRoll(c,el.dataset.v)})});

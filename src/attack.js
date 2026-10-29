@@ -21,11 +21,14 @@ function atkShotgun(w){return w&&w.type==="SHT"}
 function atkAuto(w){return !atkMelee(w)&&!atkArea(w)&&Number(w.rof)>2}
 function atkThrown(w){return /^thrown$/i.test(String(w.range||""))}
 function atkPlaced(w,s){const a=atkArea(w);return !!a&&(a.kind==="mine"||(a.kind==="explosive"&&s.place!=="throw"))}
-function atkRange(w,c){if(atkThrown(w)||(atkArea(w)&&atkArea(w).kind==="explosive")){const k=c?calc(c):null;return 10*Math.max(1,k?k.eff.BODY:5)}return parseInt(w.range)||50}
+function atkThrowMult(w){return atkArea(w)?10:3}
+function atkRange(w,c){if(atkThrown(w)||(atkArea(w)&&atkArea(w).kind==="explosive")){const k=c?calc(c):null;return atkThrowMult(w)*Math.max(1,k?k.eff.BODY:5)}return parseInt(w.range)||50}
+// lasers dial 1D6 to 5D6 a shot from a 10D6 powerpack (pg. 108)
+function atkLaser(w){return /^1-5D6$/i.test(String(w&&w.dmg||""))}
 function atkAmmo(w){return Number(w.shots)>0?Number(w.ammo)||0:null}
 function atkLauncherGrenades(c){return (c.weapons||[]).filter(w=>{const a=atkArea(w);return a&&(a.kind==="grenade"||a.kind==="gas")})}
 function atkShot(c,w,s){if(atkArea(w)&&atkArea(w).kind==="launcher"){const g=atkLauncherGrenades(c);return g.find(x=>x.id===s.gid)||g[0]||null}return w}
-function atkRoundsFor(s,w){if(atkMelee(w))return 0;const a=atkArea(w);if(a)return a.perUnit?clamp(Number(s.units)||1,1,99):1;
+function atkRoundsFor(s,w){if(atkMelee(w))return 0;if(atkLaser(w))return clamp(Number(s.power)||3,1,5);const a=atkArea(w);if(a)return a.perUnit?clamp(Number(s.units)||1,1,99):1;
   if(atkShotgun(w)&&s.mode==="auto"&&Number(w.rof)>2)return clamp(Number(s.shots)||1,1,Number(w.rof)||1);
   if((s.mode==="burst")&&atkAuto(w)&&!atkShotgun(w))return 3;if((s.mode==="auto"||s.mode==="suppress")&&atkAuto(w))return clamp(Number(s.rounds)||1,1,Number(w.rof)||1);return 1}
 function atkHasScope(c){return (c.cyber||[]).some(x=>/targeting scope/i.test(x.name||""))}
@@ -53,7 +56,7 @@ function atkMods(c,w,s){const k=calc(c);const out=[];const skill=atkSkill(c,w);c
   return out}
 function atkLocRoll(){const r=d(10);return {r,loc:r===1?"head":r<=4?"torso":r===5?"rarm":r===6?"larm":r<=8?"rleg":"lleg"}}
 const atkLocName=l=>(LOCS.find(x=>x[0]===l)||[l,l])[1];
-function atkDmgExpr(c,w,s){if(atkShotgun(w))return shotgunAt(Number(s.dv)||15).dmg;if(w.unarmed||atkMelee(w)&&/^Martial Art/.test(atkSkill(c,w))){const mv=UNARMED_MOVES[s.move||w.move];if(w.unarmed)return mv&&mv.dmg||null}return w.dmg}
+function atkDmgExpr(c,w,s){if(atkLaser(w))return `${clamp(Number(s.power)||3,1,5)}D6`;if(atkShotgun(w))return shotgunAt(Number(s.dv)||15).dmg;if(w.unarmed||atkMelee(w)&&/^Martial Art/.test(atkSkill(c,w))){const mv=UNARMED_MOVES[s.move||w.move];if(w.unarmed)return mv&&mv.dmg||null}return w.dmg}
 function atkDmgBonus(c,w,s){const k=calc(c);if(!atkMelee(w))return 0;let b=0;const mv=w.unarmed?UNARMED_MOVES[s.move||w.move]:null;
   if(!w.unarmed||mv&&mv.dmgMod)b+=k.melee;const sk=atkSkill(c,w);if(w.unarmed&&/^Martial Art/.test(sk))b+=skillLevel(c,sk);return b}
 function atkDamage(c,w,n,aim,s,dbl){s=s||atkState();const expr=atkDmgExpr(c,w,s);const mb=atkDmgBonus(c,w,s);const hits=[];if(!expr)return hits;
@@ -78,7 +81,7 @@ function attackBody(){const c=ckChar();if(!c)return `<p class="muted">Open a run
   const list=atkWeapons(c).map(x=>{const m=atkMods(c,x,{...s,mode:"single",aim:"",mod:0,sits:[],aimTurns:0,action:1,move:x.move||""});const b=m.reduce((a,y)=>a+y[1],0);const am=atkAmmo(x);
     return `<button class="ck-sk${x.id===w.id?" on":""}" data-act="atk-pick" data-id="${esc(x.id)}"><span class="n">${esc(x.name)}</span><span class="s">${esc(x.dmg)}${am!=null?` · ${am}/${esc(x.shots)}`:""}</span><b>${b}</b></button>`}).join("");
   const r=atkRange(w,c);
-  const dvs=mel||placed?"":`<div><span class="label">How far away?${atkThrown(w)?` <span class="faint" style="text-transform:none;letter-spacing:0">Thrown: up to 10 × BODY = ${r}m</span>`:""}</span><div class="ck-dv">${ATK_RANGES.map(([v,l,m])=>`<button class="${Number(s.dv)===v?"on":""}" data-act="atk-dv" data-v="${v}"><b>${v}</b><span>${l} · ${typeof m==="function"?m(r):m}</span></button>`).join("")}<button class="${!Number(s.dv)?"on":""}" data-act="atk-dv" data-v="0"><b>—</b><span>GM decides</span></button></div></div>`;
+  const dvs=mel||placed?"":`<div><span class="label">How far away?${atkThrown(w)?` <span class="faint" style="text-transform:none;letter-spacing:0">Thrown: up to ${atkThrowMult(w)===10?"10 × BODY":"BODY × 3"} = ${r}m</span>`:""}</span><div class="ck-dv">${ATK_RANGES.map(([v,l,m])=>`<button class="${Number(s.dv)===v?"on":""}" data-act="atk-dv" data-v="${v}"><b>${v}</b><span>${l} · ${typeof m==="function"?m(r):m}</span></button>`).join("")}<button class="${!Number(s.dv)?"on":""}" data-act="atk-dv" data-v="0"><b>—</b><span>GM decides</span></button></div></div>`;
   const sgAuto=sg&&Number(w.rof)>2;
   const modes=auto||sgAuto?`<div><span class="label">Fire mode</span><div class="row" style="gap:6px"><span class="seg" role="group" aria-label="Fire mode">${(sg?[["single","One blast"],["auto","Several blasts"]]:[["single","Single shot"],["burst","3-round burst"],["auto","Full auto"],["suppress","Suppressive fire"]]).map(([m,l])=>`<button class="${s.mode===m?"on":""}" data-act="atk-mode" data-v="${m}">${l}</button>`).join("")}</span>
       ${s.mode==="auto"||s.mode==="suppress"?`<span class="row ck-num" style="flex-wrap:nowrap"><button class="icon-btn" data-act="atk-rounds" data-d="${sg?-1:-10}" aria-label="Fewer">−</button><b class="num">${need}</b><button class="icon-btn" data-act="atk-rounds" data-d="${sg?1:10}" aria-label="More">+</button><span class="faint" style="font-size:12px">${sg?"blasts":"rounds"} (max ${esc(w.rof)})</span></span>`:""}
@@ -119,9 +122,9 @@ function attackBody(){const c=ckChar();if(!c)return `<p class="muted">Open a run
       ${meleeBox}${areaBox}${sgBox}
       ${modes}
       ${placed||s.mode==="suppress"?"":atkSitsHTML(c,w,s)}
-      <div class="grid2">${aim}
+      <div class="grid2">${atkLaser(w)?`<div class="field"><span class="label">Laser power</span><span class="seg">${[1,2,3,4,5].map(n=>`<button class="${clamp(Number(s.power)||3,1,5)===n?"on":""}" data-act="atk-power" data-v="${n}">${n}D6</button>`).join("")}</span><span class="faint" style="font-size:12px">The powerpack holds 10D6. Recharge: 1D6 an hour from wall current.</span></div>`:""}${aim}
         <div class="field"><span class="label">Modifier</span><div class="row ck-num" style="flex-wrap:nowrap"><button class="icon-btn" data-act="atk-mod" data-d="-1" aria-label="Lower modifier">−</button><b class="num">${sgn(Number(s.mod)||0)}</b><button class="icon-btn" data-act="atk-mod" data-d="1" aria-label="Raise modifier">+</button></div><span class="faint" style="font-size:12px">Anything else your GM calls</span></div></div>
-      ${ammo!=null?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:13px">${ATK_STACK.has((atkArea(ammoW)||{}).kind)?`Carrying <b>${ammo}</b>`:`Ammo <b>${ammo}</b> / ${esc(ammoW.shots)}`}${need?` · this uses ${need}`:""}</span><span class="row" style="gap:8px">${ed?`<label class="row" style="gap:6px;font-size:13px"><input type="checkbox" data-act-change="atk-ammo" ${s.useAmmo?"checked":""}> Use ammo</label>${ATK_STACK.has((atkArea(ammoW)||{}).kind)?"":`<button class="btn sm ghost" data-act="atk-reload">Reload</button>`}`:""}</span></div>`:""}
+      ${ammo!=null?`<div class="row" style="justify-content:space-between"><span class="mono" style="font-size:13px">${ATK_STACK.has((atkArea(ammoW)||{}).kind)?`Carrying <b>${ammo}</b>`:`${atkLaser(ammoW)?"Charge":"Ammo"} <b>${ammo}</b> / ${esc(ammoW.shots)}${atkLaser(ammoW)?"D6":""}`}${need?` · this uses ${need}`:""}</span><span class="row" style="gap:8px">${ed?`<label class="row" style="gap:6px;font-size:13px"><input type="checkbox" data-act-change="atk-ammo" ${s.useAmmo?"checked":""}> Use ammo</label>${ATK_STACK.has((atkArea(ammoW)||{}).kind)?"":`<button class="btn sm ghost" data-act="atk-reload">Reload</button>`}`:""}</span></div>`:""}
       ${short?`<div class="banner warnb" style="margin:0"><b>Not enough ammo.</b> ${ammo?`Only ${ammo} left.`:"None left."} ${ATK_STACK.has((atkArea(ammoW)||{}).kind)?"Buy more, or untick Use ammo.":"Reload (it takes your turn), or untick Use ammo."}</div>`:""}
       <div class="row" style="gap:8px"><button class="btn primary ck-go" style="flex:1" data-act="atk-roll" ${short?"disabled":""}>${goLabel}</button>
         ${placed||s.mode==="suppress"?"":`<span class="row ck-num" style="flex-wrap:nowrap" title="Hits for Damage only"><button class="btn" data-act="atk-dmg">Damage only</button>${s.mode==="auto"&&auto?`<button class="icon-btn" data-act="atk-hits" data-d="-1" aria-label="Fewer hits">−</button><b class="num" style="min-width:24px">${s.hits}</b><button class="icon-btn" data-act="atk-hits" data-d="1" aria-label="More hits">+</button>`:""}</span>`}</div>
@@ -135,6 +138,7 @@ function atkResultHTML(r){const total=r.hits.reduce((a,h)=>a+h.dmg,0);const cls=
     ${r.atk?`<div class="det mono">To hit: ${esc(r.atk.detail)}${r.atk.dv?` vs DV ${r.atk.dv}`:""}${r.atk.def?` vs defender ${esc(r.atk.def)}`:""} = ${r.atk.total}</div>`:""}
     ${r.fumbleRoll?`<div class="det"><span class="chip red">Fumble table ${r.fumbleRoll.r}</span> ${esc(r.fumbleRoll.text)}</div>`:""}
     ${r.area?`<div class="det">${esc(r.area.where)}</div>${r.area.dmg!=null?`<div class="det mono">${esc(r.area.dmgText)}</div>`:""}`:""}
+    ${r.hits.length&&/Microwaver/i.test(r.wname||"")?`<div class="row" style="gap:6px"><button class="btn sm" data-act="atk-microwave">Roll microwaver side effects</button><span class="faint" style="font-size:12px">For anyone within 1m of the beam.</span></div>`:""}
     ${r.hits.length?`<div class="atk-hits">${r.hits.map(h=>`<span class="chip${h.loc==="head"?" red":""}">${esc(atkLocName(h.loc))}${h.lr?` (${h.lr})`:""} · <b>${h.dmg}</b>${h.loc==="head"?" ×2 after armor":""}</span>`).join("")}</div>`:""}
     <div class="faint" style="font-size:12.5px">${esc(r.note||"")}</div></div></div>`}
 /* A fumble (pg. 42, 106): automatic weapons check reliability; everything else rolls the combat fumble table. */
@@ -156,7 +160,7 @@ function atkAreaRoll(c,w,s,out,hit){const shot=atkShot(c,w,s);const fx=atkArea(s
 function atkRoll(damageOnly){const c=ckChar();if(!c)return;const s=atkState();const w=atkWeapon(c,s.wid);if(!w)return;const ed=canEditChar(c);const who=c.handle||c.name||"Unnamed";
   const mel=atkMelee(w),auto=atkAuto(w);const area=atkArea(w);const shot=atkShot(c,w,s);const ammoW=area&&area.kind==="launcher"?shot:w;const ammo=ammoW?atkAmmo(ammoW):null;let need=atkRoundsFor(s,w);const label=w.name;
   if(area&&area.kind==="launcher"&&!shot){showNotice("Load a grenade first.");return}
-  const out={hits:[],note:"",hit:null};
+  const out={hits:[],note:"",hit:null,wname:w.name};
   if(s.mode==="suppress"&&auto&&!damageOnly){const width=Math.max(2,Number(s.width)||2);const save=Math.floor(need/width);
     Dice.raw(`Suppressive fire · ${label}`,`${need} rounds into a ${width}m zone: anyone entering or crossing it rolls Athletics + REF + 1D10 against ${save}, or takes 1D6 rounds (${w.dmg} each, random locations)`,save,who,[{t:`Save ${save}`,c:"amber"}]);
     out.verdict=`Fire zone: save ${save}`;out.note=`Anyone entering or crossing the ${width}m zone this turn rolls Athletics + REF + 1D10. Under ${save}, they take 1D6 rounds of ${w.dmg}, each in a random location.`}
@@ -193,6 +197,8 @@ Object.assign(A,{
   "atk-rounds":el=>{const s=atkState();const c=ckChar(),w=c&&atkWeapon(c,s.wid);if(!w)return;const cur=atkRoundsFor(s,w);const d0=Number(el.dataset.d);
     if(atkShotgun(w)){s.shots=clamp(cur+d0,1,Number(w.rof)||1)}else s.rounds=clamp(cur<10&&d0>0?10:cur+d0,1,Number(w.rof)||10);renderModal()},
   "atk-width":el=>{const s=atkState();s.width=clamp((Number(s.width)||2)+Number(el.dataset.d),2,50);renderModal()},
+  "atk-power":el=>{atkState().power=Number(el.dataset.v);renderModal()},
+  "atk-microwave":()=>{const c=ckChar();microwaveRoll(c?(c.handle||c.name):"")},
   "atk-hits":el=>{const s=atkState();s.hits=clamp((Number(s.hits)||1)+Number(el.dataset.d),1,99);renderModal()},
   "atk-mod":el=>{const s=atkState();s.mod=clamp((Number(s.mod)||0)+Number(el.dataset.d),-20,20);renderModal()},
   "atk-sit":el=>{const s=atkState();const id=el.dataset.v;const set=new Set(s.sits||[]);if(set.has(id))set.delete(id);else{set.add(id);if(MOVING_SITS.includes(id))MOVING_SITS.filter(x=>x!==id).forEach(x=>set.delete(x));if(["small","tiny","large"].includes(id))["small","tiny","large"].filter(x=>x!==id).forEach(x=>set.delete(x))}s.sits=[...set];renderModal()},

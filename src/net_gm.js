@@ -60,7 +60,7 @@ function nfEditor(f){const s=fortStats(f);const k=ui.netCell;const cell=k?f.cell
       </aside></div></section>`}
 function nfMemEditor(m){return `<div class="field"><label class="label" for="nc-n">Memory number</label><input id="nc-n" type="number" min="0" max="999" data-nc="n" value="${esc(m.n)}" style="width:80px"></div>
   <div class="field"><span class="label">Files (1 MU each)</span>${(m.files||[]).map((fl,i)=>`<div class="nf-file"><div class="row" style="gap:6px;flex-wrap:nowrap"><input data-nc="files.${i}.name" value="${esc(fl.name)}" maxlength="80" aria-label="File name"><select data-nc="files.${i}.type" aria-label="File type">${FILE_TYPES.map(t=>`<option ${fl.type===t?"selected":""}>${esc(t)}</option>`).join("")}</select>
-      <label class="row" style="gap:3px" title="File lock: a Decryption program must beat this + 1D10. 0 for none"><span class="label">Lock</span><input type="number" min="0" max="10" data-nc="files.${i}.lock" value="${esc(fl.lock||0)}" style="width:52px"></label><button class="icon-btn" data-act="nf-file-rm" data-i="${i}" aria-label="Remove file">×</button></div>
+      <label class="row" style="gap:3px" title="File lock: a Decryption program must beat this + 1D10. 0 for none"><span class="label">Lock</span><input type="number" min="0" max="10" data-nc="files.${i}.lock" value="${esc(fl.lock||0)}" style="width:52px"></label><label class="row" style="gap:3px" title="Money in the file: copying it pays the runner"><span class="label">eb</span><input type="number" min="0" max="10000000" data-nc="files.${i}.eb" value="${esc(fl.eb||0)}" style="width:84px"></label><button class="icon-btn" data-act="nf-file-rm" data-i="${i}" aria-label="Remove file">×</button></div>
       <textarea data-nc="files.${i}.docs" placeholder="Documents inside, one per line" style="min-height:44px">${esc(fl.docs||"")}</textarea></div>`).join("")}
     <button class="btn sm ghost" data-act="nf-file-add">+ File</button></div>
   <div class="grid2"><div class="field"><label class="label">Virtual reality</label><select data-act-change="nf-virtual"><option value="">None</option>${VIRTUALS.map(v=>`<option ${m.virtual&&m.virtual.type===v[0]?"selected":""}>${esc(v[0])}</option>`).join("")}</select></div>
@@ -101,6 +101,7 @@ Object.assign(A,{
   "nf-run":()=>{const f=netFortSel();if(!f)return;ui.netPick=st.party.filter(c=>c.deck).map(c=>c.id);if(!ui.netPick.length)ui.netPick=st.party.filter(c=>c.role==="Netrunner").map(c=>c.id);ui.modal="net-start";renderModal()},
 });
 Object.assign(CHANGE,{
+  "nr-free":el=>{ui.netFree=el.checked;render()},
   "nf-remote":el=>{ui.netRemote=el.value},
   "nf-prog":el=>{ui.netProg=el.value},
   "nf-hidden":el=>{const f=netFortSel();const p=f&&f.progs.find(x=>x.id===el.dataset.id);if(p){p.hidden=el.checked;if(p.hidden&&!p.stealth)p.stealth=3;netSaved()}},
@@ -288,7 +289,8 @@ function runnerMenu(run,r,m,byGM){const who=runnerName(r);
     if(!byGM&&r.acted===run.round)return "You've already acted this round.";netReadInto(run,r,k);if(!byGM)r.acted=run.round;const n=(c.files||[]).length;netLog(run,`${who} reads memory ${c.n}: ${n} file${n===1?"":"s"}${c.virtual?` and a ${c.virtual.type.toLowerCase()}`:""}.`);return ""}
   if(m.cmd==="copy"){const rd=r.read[m.k];const c=run.fort.cells[m.k];const fl=rd&&c&&(c.files||[])[m.i];if(!fl)return "Read the memory first.";if(Number(fl.lock))return "That file is locked. Decrypt it first.";
     if(!byGM&&r.acted===run.round)return "You've already acted this round.";if(!byGM)r.acted=run.round;r.copied=[...(r.copied||[]),m.k+"|"+fl.name];netReadInto(run,r,m.k);
-    withPc(r.id,ch=>{ch.notes=[(ch.notes||"").trim(),`Copied from ${run.fname}, memory ${c.n}: ${fl.name} (${fl.type})${fl.docs?"\n"+fl.docs:""}`].filter(Boolean).join("\n\n")});
+    withPc(r.id,ch=>{ch.notes=[(ch.notes||"").trim(),`Copied from ${run.fname}, memory ${c.n}: ${fl.name} (${fl.type})${fl.docs?"\n"+fl.docs:""}`].filter(Boolean).join("\n\n");
+      const eb=Number(fl.eb)||0;const key=m.k+"|"+m.i;run.paid=run.paid||{};if(eb&&!run.paid[key]){run.paid[key]=r.id;ch.eb=(Number(ch.eb)||0)+eb;netLog(run,`${runnerName(r)} moves ${fmtEb(eb)} out of ${fl.name}.`)}});
     netLog(run,`${who} copies "${fl.name}".`);return ""}
   return "Unknown command."}
 /* A new round: statuses tick down, Worms finish, crashed CPUs reboot (pg. 151). */
@@ -334,8 +336,8 @@ function viewNetRun(run){const f=run.fort;const sys=runSys(run);const rs=run.run
   const marks=[...run.ice.filter(i=>i.alive).map(i=>({kind:"ice",x:i.x,y:i.y,label:i.name,title:`${i.name} (${i.cls}, STR ${i.str}/${i.max})${i.alerted?", alerted":""}${i.hidden&&!i.revealed?", hidden":""}`,cls:[i.alerted?"alert":"",i.hidden&&!i.revealed?"hidden":"",selI&&selI.id===i.id?"on":""].join(" ")})),
     ...Object.values(rs).filter(r=>!r.out).map(r=>{const c=pc(r.id);return {kind:"runner",x:r.x,y:r.y,label:runnerName(r),color:c?charColor(c):"#3ef2ff",title:runnerName(r),cls:selR&&selR.id===r.id?"me":""}})];
   const selP=selR&&ui.netRProg&&selR.progs.find(p=>p.id===ui.netRProg);
-  const reach=selR&&!selR.out&&!selP&&ui.netRMode==="move"?new Set(fortReach(f,runState(run),selR.x,selR.y,5).keys()):null;
-  const hint=selI?`Click a space to move ${selI.name} there.`:selP?`Click a target for ${runnerName(selR)}'s ${selP.name}.`:selR&&ui.netRMode==="read"?"Click a memory to read.":selR?`Click a space to move ${runnerName(selR)}. Highlighted spaces are within 5.`:"Select a runner or a defence.";
+  const reach=selI&&!ui.netFree?new Set(fortReach(f,runState(run),selI.x,selI.y,5).keys()):selR&&!selR.out&&!selP&&ui.netRMode==="move"?new Set(fortReach(f,runState(run),selR.x,selR.y,5).keys()):null;
+  const hint=selI?`Click a space to move ${esc(selI.name)} there. ${ui.netFree?"GM override: anywhere.":"Highlighted spaces are within 5."} <label class="row" style="gap:4px;display:inline-flex"><input type="checkbox" data-act-change="nr-free" ${ui.netFree?"checked":""}>GM override</label>`:selP?`Click a target for ${runnerName(selR)}'s ${selP.name}.`:selR&&ui.netRMode==="read"?"Click a memory to read.":selR?`Click a space to move ${runnerName(selR)}. Highlighted spaces are within 5.`:"Select a runner or a defence.";
   const order=run.order.length?`<div class="row" style="gap:4px">${run.order.map((o,i)=>`<span class="chip ${i===run.turn?"red":"ink"}" title="${esc(o.detail)}">${esc(o.label)} ${o.tot}</span>`).join("")}</div>`:"";
   const runnerCard=r=>{const c=pc(r.id);if(!c)return "";const k=calc(c);const on=selR&&selR.id===r.id;
     return `<div class="nr-card ${on?"on":""}"><button class="nr-name" data-act="nr-sel" data-id="${esc(r.id)}"><span class="portrait sm" style="background:${esc(charColor(c))}">${esc((c.handle||"?").charAt(0).toUpperCase())}</span><b>${esc(runnerName(r))}</b><span class="faint">${r.out?"out of the Net":fcoord(r.x,r.y)}${isOnline(r.id)?" · online":""}</span></button>
@@ -351,7 +353,7 @@ function viewNetRun(run){const f=run.fort;const sys=runSys(run);const rs=run.run
       <div class="row" style="gap:10px"><b>Round ${run.round}</b>${order}${run.sys.crash&&run.round<run.sys.crash?`<span class="chip amber">CPU down until round ${run.sys.crash}</span>`:""}${(run.sys.status||[]).filter(s=>run.round>=s.from).map(s=>`<span class="chip amber">${esc(s.t)}</span>`).join("")}</div>
       <div class="row" style="gap:6px"><button class="btn" data-act="nr-init">Roll Net initiative</button><button class="btn primary" data-act="nr-next">${run.order.length?"Next turn →":"Next round →"}</button><button class="btn sm ghost" data-act="nr-alert-all">Alert the system</button><button class="btn danger" data-act="nr-end">${ui.confirm==="nr-end"?"Confirm: end the run":"End the run"}</button></div></div></div>
     <div class="nr-layout">
-      <div style="min-width:0;display:grid;gap:8px;align-content:start"><p class="faint" style="margin:0;font-size:12.5px" aria-live="polite">${esc(hint)}${selP||selI||ui.netRMode==="read"?` <button class="btn sm ghost" data-act="nr-cancel">Cancel</button>`:""}</p>
+      <div style="min-width:0;display:grid;gap:8px;align-content:start"><p class="faint" style="margin:0;font-size:12.5px" aria-live="polite">${selI?hint:esc(hint)}${selP||selI||ui.netRMode==="read"?` <button class="btn sm ghost" data-act="nr-cancel">Cancel</button>`:""}</p>
         <div class="ng-wrap">${netGridHTML({cell:k=>f.cells[k]||null,fog:k=>vis?(vis.has(k)?"":anySeen.has(k)?"dim":"gm"):anySeen.has(k)?"":"gm",marks,reach,act:"nr-cell",state:runState(run),gm:true,wallStr:sys.wallStr,cls:"run",label:run.fname})}</div>
         <p class="faint" style="margin:0;font-size:12px">You see everything. ${selR?`Dimmed: what ${esc(runnerName(selR))} has seen before but can't see now. Darker: what no runner has seen.`:"Darker: what no runner has seen yet."}</p>
         <section class="netlog nr-log"><h3>Log</h3>${run.log.slice().reverse().slice(0,40).map(l=>`<div><span class="faint mono">R${l.r}</span> ${esc(l.text)}</div>`).join("")}</section></div>
@@ -371,7 +373,7 @@ Object.assign(A,{
   "nr-out":()=>{const run=netRun();const r=run&&run.runners[ui.netRSel];if(!r)return;r.out=!r.out;if(!r.out){const [x,y]=netEntry(run.fort);if(cellBlocks(run.fort.cells[fkey(r.x,r.y)],runState(run),fkey(r.x,r.y))){r.x=x;r.y=y}}netLog(run,`${runnerName(r)} ${r.out?"is pulled out of":"jacks back into"} the Net.`);netChanged()},
   "nr-clear":()=>{const run=netRun();const r=run&&run.runners[ui.netRSel];if(!r)return;r.status=[];r.pending=[];r.intLoss=0;netChanged()},
   "nr-cell":el=>{const run=netRun();if(!run)return;const x=Number(el.dataset.x),y=Number(el.dataset.y);
-    if(ui.netISel){const i=run.ice.find(q=>q.id===ui.netISel);if(i){if(cellBlocks(run.fort.cells[fkey(x,y)],runState(run),fkey(x,y))){showNotice("Programs can't move into walls or closed gates.");return}i.x=x;i.y=y;netChanged()}return}
+    if(ui.netISel){const i=run.ice.find(q=>q.id===ui.netISel);if(i){if(cellBlocks(run.fort.cells[fkey(x,y)],runState(run),fkey(x,y))){showNotice("Programs can't move into walls or closed gates.");return}if(!ui.netFree&&!fortReach(run.fort,runState(run),i.x,i.y,5).has(fkey(x,y))){showNotice("Defences move 5 spaces a turn, like runners. Tick GM override to place one anywhere.");return}i.x=x;i.y=y;netChanged()}return}
     const r=ui.netRSel&&run.runners[ui.netRSel];
     if(r&&ui.netRProg){const e=runnerAct(run,r,ui.netRProg,x,y,true);if(!e)ui.netRProg=null;netDo(e);return}
     if(r&&ui.netRMode==="read"){const e=runnerMenu(run,r,{cmd:"read",x,y},true);if(!e)ui.netRMode="move";netDo(e);return}

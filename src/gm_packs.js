@@ -23,7 +23,7 @@ function queueRulesBroadcast(){clearTimeout(rulesT);rulesT=setTimeout(()=>{if(Ho
 
 
 /* ---------- the shop: lock and setup ---------- */
-function shopSummary(){const s=st.shop;const hid=["w","a","c","g","p","d"].reduce((a,k)=>a+s.hide[k].length,0);const pr=["w","a","c","g","p","d"].reduce((a,k)=>a+Object.keys(s.price[k]).length,0);
+function shopSummary(){const s=st.shop;const hid=["w","a","c","g","p","d","dr","bs"].reduce((a,k)=>a+s.hide[k].length,0);const pr=["w","a","c","g","p","d","dr","bs"].reduce((a,k)=>a+Object.keys(s.price[k]).length,0);
   return hid||pr?[hid?`${hid} item${hid===1?"":"s"} not sold`:"",pr?`${pr} price change${pr===1?"":"s"}`:""].filter(Boolean).join(" · "):"Everything sold at list price"}
 function shopLockHTML(compact){const s=st.shop;
   return `<div class="shoplock ${s.locked?"closed":"open"}"><div class="row" style="justify-content:space-between;gap:8px"><span><span class="chip ${s.locked?"red":"green"}">Shop ${s.locked?"closed":"open"}</span>${!s.locked&&s.vendor?` <b>${esc(s.vendor)}</b>`:""}</span>
@@ -31,7 +31,7 @@ function shopLockHTML(compact){const s=st.shop;
     ${compact?"":`<div class="row" style="flex-wrap:nowrap;gap:6px"><input id="shop-vendor" value="${esc(s.vendor||"")}" placeholder="Vendor name players see (optional), e.g. Afterlife armory" maxlength="60" aria-label="Vendor name"></div>`}
     <span class="faint" style="font-size:12px">${s.locked?"Players in this campaign can browse but can't buy or add items until you open it.":"Players in this campaign can buy now."} Applies straight away to connected players.</span></div>`}
 function shopSetupBody(){const t=ui.shopSetTab||"w";const q=(ui.shopSetQ||"").toLowerCase();const s=st.shop;
-  const L=SHOP_LISTS[t]();const tabs=[["w","Weapons"],["a","Armor"],["c","Cyberware"],["g","Gear"],["d","Decks"],["p","Programs"]];
+  const L=SHOP_LISTS[t]();const tabs=[["w","Weapons"],["a","Armor"],["c","Cyberware"],["g","Gear"],["dr","Drugs"],["bs","Bodyshop"],["d","Decks"],["p","Programs"]];
   const rows=L.map((r,i)=>{if(q&&!r[0].toLowerCase().includes(q))return "";const hidden=s.hide[t].includes(r[0]);const pr=s.price[t][r[0]];const hb=PACK_SRC[t][r[0]];
     return `<div class="shop-row ssrow ${hidden?"off":""}"><label class="row" style="gap:8px;min-width:0;flex:1"><input type="checkbox" data-act-change="shop-sold" data-k="${t}" data-n="${esc(r[0])}" ${hidden?"":"checked"}><span class="t">${esc(r[0])}</span>${hb?`<span class="chip amber hbchip" title="${esc(hb)}">Homebrew</span>`:""}</label>
       <span class="faint mono" style="font-size:12px">list ${fmtEb(r[SHOP_COST_IX[t]])}</span><input type="number" min="0" class="ssprice" data-shop-price="${t}" data-n="${esc(r[0])}" value="${pr!=null?pr:""}" placeholder="${r[SHOP_COST_IX[t]]}" aria-label="Price for ${esc(r[0])}"></div>`}).join("");

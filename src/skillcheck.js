@@ -10,8 +10,8 @@ function ckSkillNames(c){const names=new Set(SKILL_DEFS.map(x=>x[0]));const ab=a
 function ckParts(c,n){const k=calc(c);
   if(n.startsWith("stat:")){const s=n.slice(5);return {label:`${s} check`,stat:s,statV:k.eff[s]||0,lvl:0,extra:0,base:k.eff[s]||0}}
   const def=skillDef(c,n);const statV=k.eff[def.s]||0;const lvl=skillLevel(c,n);
-  const extra=n==="Awareness/Notice"&&c.role==="Solo"?skillLevel(c,"Combat Sense"):0;
-  return {label:n,stat:def.s,statV,lvl,extra,base:statV+lvl+extra}}
+  const extra=n==="Awareness/Notice"&&c.role==="Solo"?skillLevel(c,"Combat Sense"):0;const fxb=fxSkillBonus(c,n);
+  return {label:n,stat:def.s,statV,lvl,extra,fx:fxb.parts,chip:chipLevel(c,n)!=null,base:statV+lvl+extra+fxb.total}}
 function ckLuckLeft(c){return Math.max(0,(Number(c.stats&&c.stats.LUCK)||0)-(Number(c.luckSpent)||0))}
 function ckOpen(){const c=ckChar();if(!c){showNotice("Open a runner first, then make a skill check.");return}
   const s=ckState();if(!s.skill||(!s.skill.startsWith("stat:")&&!ckSkillNames(c).includes(s.skill))){const top=ckTrained(c)[0];s.skill=top||"stat:REF"}
@@ -28,7 +28,7 @@ function checkBody(){const c=ckChar();if(!c)return `<p class="muted">Open a runn
   const stats=STAT_KEYS.filter(x=>x!=="MA"&&x!=="LUCK").map(x=>`<button class="ck-st${s.skill==="stat:"+x?" on":""}" data-act="ck-pick" data-n="stat:${x}">${x} <b>${k.eff[x]||0}</b></button>`).join("");
   const left=ckLuckLeft(c);const canLuck=canEditChar(c)&&left>0;
   const total=pick.base+(Number(s.mod)||0)+(Number(s.luck)||0);
-  const how=pick.stat&&!s.skill.startsWith("stat:")?`${esc(pick.stat)} ${pick.statV} + ${esc(pick.label)} ${pick.lvl}${pick.extra?` + Combat Sense ${pick.extra}`:""}`:`${esc(pick.stat)} ${pick.statV}`;
+  const how=pick.stat&&!s.skill.startsWith("stat:")?`${esc(pick.stat)} ${pick.statV} + ${esc(pick.label)} ${pick.lvl}${pick.chip?" (chip)":""}${pick.extra?` + Combat Sense ${pick.extra}`:""}${(pick.fx||[]).map(p=>` ${p[1]<0?"−":"+"} ${esc(p[0])} ${Math.abs(p[1])}`).join("")}`:`${esc(pick.stat)} ${pick.statV}`;
   const r=s.last;
   const res=r?`<div class="ck-res ${r.fumble?"bad":r.dv?(r.total>=r.dv?"good":"bad"):""}" role="status"><div class="tot num">${r.total}</div><div style="min-width:0">
       <div class="verdict">${r.fumble?"Fumble: automatic failure":r.dv?(r.total>=r.dv?"Success":"Failure"):"Rolled"}${r.crit?" · critical":""}</div>

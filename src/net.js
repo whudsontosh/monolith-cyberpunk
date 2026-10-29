@@ -316,7 +316,7 @@ function sanFort(raw){if(!raw||typeof raw!=="object")return null;const f=blankFo
   for(const [k,c] of Object.entries(cells)){if(++n>FORT_W*FORT_H)break;const m=/^(\d{1,2}),(\d{1,2})$/.exec(k);if(!m||!c||typeof c!=="object")continue;const x=+m[1],y=+m[2];if(x>=FORT_W||y>=FORT_H)continue;
     const t=CELL_TYPES[c.t]?c.t:null;if(!t)continue;const o={t};
     if(t==="gate")o.str=pkNum(c.str,0,10,2);
-    if(t==="mem"){o.n=pkNum(c.n,0,999,0);o.files=(Array.isArray(c.files)?c.files:[]).slice(0,30).filter(fl=>fl&&typeof fl==="object").map(fl=>({name:pkStr(fl.name,80)||"File",type:FILE_TYPES.includes(fl.type)?fl.type:"Inter-Office",mu:pkNum(fl.mu,0,10,1),lock:pkNum(fl.lock,0,10,0),docs:pkText(fl.docs,2000)}));
+    if(t==="mem"){o.n=pkNum(c.n,0,999,0);o.files=(Array.isArray(c.files)?c.files:[]).slice(0,30).filter(fl=>fl&&typeof fl==="object").map(fl=>({name:pkStr(fl.name,80)||"File",type:FILE_TYPES.includes(fl.type)?fl.type:"Inter-Office",mu:pkNum(fl.mu,0,10,1),lock:pkNum(fl.lock,0,10,0),eb:pkNum(fl.eb,0,10000000,0),docs:pkText(fl.docs,2000)}));
       if(c.virtual&&typeof c.virtual==="object")o.virtual={type:VIRTUALS.some(v=>v[0]===c.virtual.type)?c.virtual.type:VIRTUALS[0][0],realism:REALISM.some(v=>v[0]===c.virtual.realism)?c.virtual.realism:"Simple"}}
     if(t==="remote"){o.kind=REMOTE_KINDS.includes(c.kind)?c.kind:"Terminal";o.label=pkStr(c.label,60)}
     if(t==="ldl")o.label=pkStr(c.label,60);

@@ -5,9 +5,9 @@ import os, json, hashlib, shutil, zipfile, time
 HERE=os.path.dirname(os.path.abspath(__file__));ROOT=os.path.dirname(HERE)
 def rd(p): return open(os.path.join(HERE,p),encoding="utf-8").read()
 M=json.load(open(os.path.join(ROOT,"game.json")))
-SHARED=["rules.js","net.js","med.js","paper.js","packs.js"]
-BUNDLES={"player.js":SHARED+["guide.js","player.js","player_packs.js","skillcheck.js","iteminfo.js","attack.js","player_table.js","net_player.js","med_player.js","game.js"],
-         "gm.js":SHARED+["gm.js","gm_packs.js","net_gm.js","med_gm.js","game.js"]}
+SHARED=["rules.js","net.js","med.js","cyber.js","paper.js","packs.js"]
+BUNDLES={"player.js":SHARED+["guide.js","player.js","player_packs.js","skillcheck.js","iteminfo.js","attack.js","player_table.js","net_player.js","med_player.js","cyber_player.js","game.js"],
+         "gm.js":SHARED+["gm.js","gm_packs.js","net_gm.js","med_gm.js","cyber_gm.js","game.js"]}
 OUT=os.path.join(ROOT,"dist","game");REL=os.path.join(ROOT,"dist","release")
 shutil.rmtree(os.path.join(ROOT,"dist"),ignore_errors=True);os.makedirs(os.path.join(OUT,"fonts"));os.makedirs(REL)
 head=f"/* Cyberpunk {M['version']} for Monolith */\n\"use strict\";\n"
