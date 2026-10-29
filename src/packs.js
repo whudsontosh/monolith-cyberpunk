@@ -103,7 +103,7 @@ function activateRules(packs){packs=(packs||[]).filter(Boolean);const key=packs.
     add("w",p.weapons,w=>WEAPONS.push([w.name,w.type,w.wa,w.conc,w.avail,w.dmg,w.shots?String(w.shots):"",String(w.rof),w.rel,w.range+"m",w.cost,w.skill||""]));
     add("a",p.armor,a=>ARMOR.push([a.name,a.sp,a.locs.slice(),a.ev,a.cost]));
     add("c",p.cyber,x=>{const ex={};if(x.init)ex.init=x.init;if(x.smart)ex.smart=1;if(Object.keys(x.mods||{}).length)ex.mods={...x.mods};if(x.armor)ex.armor={sp:x.armor.sp,locs:x.armor.locs.slice()};CYBER.push([x.name,x.cat,x.cost,x.hc,ex])});
-    add("g",p.gear,g=>GEAR.push([g.name,g.cost]));
+    add("g",p.gear,g=>GEAR.push([g.name,g.cost,"Homebrew"]));
     add("p",p.programs,x=>{const r=[x.name,x.cls,x.str,x.mu,x.cost,clone(x.fx||{}),x.desc||""];if(x.ice)r.ice=true;PROGRAMS.push(r)});
     add("d",p.decks,x=>DECKS.push([x.name,x.type,x.speed,x.wall,x.mu,x.cost,[],x.desc||""]))}
   return true}

@@ -339,6 +339,7 @@ function tabGear(c,k,ed){
       <div class="field"><label class="label" for="ls-f">Food (eb/month)</label><input id="ls-f" type="number" data-f="lifestyle.food" value="${esc(ls.food)}" ${ed?"":"disabled"}></div>
       <div class="field"><label class="label" for="ls-o">Other (eb/month)</label><input id="ls-o" type="number" data-f="lifestyle.other" value="${esc(ls.other)}" ${ed?"":"disabled"}></div>
       ${ed?`<div style="grid-column:1/-1"><button class="btn sm" data-act="pay-month" data-v="${monthly}">Pay this month (−${fmtEb(monthly)})</button></div>`:""}
+      <details class="ls-book" style="grid-column:1/-1"><summary class="label">The book's living costs</summary><div class="ls-grid">${LIVING_COSTS.map(([grp,rows])=>`<div><span class="label">${esc(grp)}</span>${rows.map(([n,v])=>`<div class="ls-row"><span>${esc(n)}</span><b class="mono">${esc(v)}</b></div>`).join("")}</div>`).join("")}</div></details>
     </div></section>
   </div>`;
 }
@@ -376,7 +377,7 @@ function shopBody(c){
   if(t==="Weapons") rows=WEAPONS.map((w,i)=>shopRow(w[0],`${w[1]} · WA ${sgn(w[2])} · ${w[5]} · ${w[6]?w[6]+" shots · ":""}ROF ${w[7]} · ${w[9]} · ${w[8]} · Avail ${w[4]}`,w[10],"w",i)).join("");
   if(t==="Armor") rows=ARMOR.map((a,i)=>shopRow(a[0],`SP ${a[1]} · ${a[2].map(l=>LOCS.find(x=>x[0]===l)[1]).join(", ")} · EV ${a[3]}`,a[4],"a",i)).join("");
   if(t==="Cyberware"){let last="";rows=CYBER.map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${x[1]}</div>`:"";last=x[1];return head+shopRow(x[0],`HC ${x[3]} (avg ${avgDice(x[3])}) · surgery ${surgOf(x)}`,x[2],"c",i)}).join("")}
-  if(t==="Gear") rows=GEAR.map((g,i)=>shopRow(g[0],"",g[1],"g",i)).join("");
+  if(t==="Gear"){let last="";rows=GEAR.map((g,i)=>{const grp=g[2]||"Other";const head=grp!==last?`<div class="label" style="padding-top:12px">${esc(grp)}</div>`:"";last=grp;return head+shopRow(g[0],"",g[1],"g",i)}).join("")}
   if(t==="Drugs"||t==="Bodyshop") rows=medShopRows(c,t);
   if(t==="Decks") rows=DECKS.map((x,i)=>shopRow(x[0],`${DECK_TYPES[x[1]]||x[1]} · Speed ${sgn(x[2])} · Data walls ${x[3]} · ${x[4]} MU${c.deck?" · replaces your deck":""}`,x[5],"d",i)).join("");
   if(t==="Programs"){let last="";rows=SHOP_LISTS.p().map((x,i)=>{const head=x[1]!==last?`<div class="label" style="padding-top:12px">${esc(x[1])}</div>`:"";last=x[1];return head+shopRow(x[0],`STR ${x[2]} · ${x[3]} MU`,x[4],"p",i)}).join("")}
@@ -429,7 +430,7 @@ Object.assign(A,{
       if(ex){ex.shots=String((Number(ex.shots)||0)+1);ex.ammo=(Number(ex.ammo)||0)+1;item=ex}else{item=mkWeapon(row);c.weapons.push(item)}}
     if(k==="a"){item=mkArmor(ARMOR[i]);cost=ARMOR[i][4];c.armor.push(item)}
     if(k==="g"){const g=GEAR[i];cost=g[1];const ex=c.gear.find(x=>x.name===g[0]);if(ex)ex.qty=(Number(ex.qty)||1)+1;else c.gear.push({id:uid(),name:g[0],qty:1,cost:g[1],notes:""});item={name:g[0]}}
-    if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item);if(ui.shopSurg)cost+=medSurgery(c,r)}
+    if(k==="c"){const r=CYBER[i];cost=r[2];let loss;if(ui.hcMode==="roll"){const rr=rollDice(r[3]);loss=rr?rr.total:0;pushRoll({who:c.handle||"Runner",label:`Humanity cost: ${r[0]}`,detail:`${r[3]} → ${rr?rr.text:"0"}`,total:loss,t:Date.now()})}else loss=avgDice(r[3]);item=mkCyber(r,loss);c.cyber.push(item);{const cw=cyberWeapon(item);if(cw)c.weapons.push(cw)}if(ui.shopSurg)cost+=medSurgery(c,r)}
     if(!ui.shopFree)c.eb=(Number(c.eb)||0)-cost;
     saveChar(c);renderModal();if(k!=="c")showNotice(`${ui.shopFree?"Added":"Bought"} ${item.name}.`);if(ui.view!=="roster")render();},
   "add-skill":()=>{const n=document.getElementById("ns-name").value.trim();const s=document.getElementById("ns-stat").value;const m=clamp(Number(document.getElementById("ns-mult").value)||1,1,5);
@@ -461,7 +462,7 @@ Object.assign(A,{
   "roll-dmg":el=>{const c=curChar();const k=calc(c);const w=c.weapons[Number(el.dataset.i)];exprRoll(`Damage · ${w.name}`,w.dmg,w.type==="MEL"?k.melee:0)},
   "ammo":el=>mutate(c=>{const w=c.weapons[Number(el.dataset.i)];const shots=Number(w.shots)||0;if(el.dataset.d==="reload")w.ammo=shots;else w.ammo=clamp((Number(w.ammo)||0)+Number(el.dataset.d),0,shots)}),
   "edit-item":el=>{ui.editItem=ui.editItem===el.dataset.id?null:el.dataset.id;ui.confirm=null;render()},
-  "del-item":el=>{const c=curChar();const list=el.dataset.list,i=Number(el.dataset.i);const it=c[list][i];if(ui.confirm!==it.id){ui.confirm=it.id;render();return}mutate(c=>{c[list].splice(i,1);ui.confirm=null;ui.editItem=null})},
+  "del-item":el=>{const c=curChar();const list=el.dataset.list,i=Number(el.dataset.i);const it=c[list][i];if(ui.confirm!==it.id){ui.confirm=it.id;render();return}mutate(c=>{c[list].splice(i,1);if(list==="cyber")c.weapons=(c.weapons||[]).filter(w=>w.cyber!==it.id);ui.confirm=null;ui.editItem=null})},
   "add-blank":el=>mutate(c=>{const l=el.dataset.list;const id=uid();
     if(l==="weapons")c.weapons.push({id,name:"New weapon",type:"P",wa:0,conc:"J",avail:"C",dmg:"2D6",shots:10,ammo:10,rof:"2",rel:"ST",range:"50m",cost:0,skill:"Handgun"});
     if(l==="armor")c.armor.push({id,name:"New armor",sp:10,locs:["torso"],ev:0,cost:0,worn:true,dmg:{}});

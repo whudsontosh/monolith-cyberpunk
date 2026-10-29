@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.3
+
+The rest of the book's shop.
+
+- **Weapons:** the exotics (microwaver, laser cannon, needlegun, Power Squirt, Wombat airpistol, taser,
+  compound bow and crossbow), the rest of the melee weapons (Battleglove, naginata, shuriken, switchblade,
+  brass knuckles, sledgehammer), and the "Old Guns Never Die" list at about half the price of a new gun.
+  Bows and crossbows use Archery; shuriken are thrown with Athletics.
+- **Cyberware:** the rest of the book's list, about 80 more pieces: fashionware, neural links, eye and ear
+  options, implants (gills, adrenal booster, sensors and more), cyberlimb options, hands and feet, limb
+  built-ins and limb weapons, linear frames and body plating, each with its surgery code.
+- **Cyberweapons in the Attack window:** installing a cyberweapon (rippers, wolvers, Hammer hand, Buzz hand,
+  micro-missile launcher, capacitor laser and so on) adds it to your weapons; removing the implant removes it.
+  Body plating counts as armor.
+- **Gear:** the book's whole gear list, grouped like the book: fashion in its five styles, tools, personal
+  electronics, data systems, communications, surveillance, security, medical, furnishings, entertainment,
+  ammunition and reloads, and vehicles.
+- **Living costs:** the Lifestyle panel shows the book's housing, groceries and services prices.
+- Fixed prices to match the book: the flamethrower (1,500eb), knives (20eb) and clubs (free).
+
 ## 1.1.2
 
 Trauma Team: the rulebook's medical chapter.
