@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0
+
+Vehicles, from "Vehicles in FNFF" (pg. 113) and the vehicles in the gear list.
+
+- **Garage:** vehicles bought in the gear shop go to a Garage on the Gear & cash tab instead of the gear list,
+  each with its skill, handling, top speed, SP, seats and a structure track. A shop option buys them with cyber
+  controls at twice the price.
+- **Control rolls:** REF + Driving or Piloting + 1D10 against the maneuver: Simple 15, Difficult 20, Very
+  Difficult 25. The vehicle's handling (sportscar +2, truck −4, AV-4 −2 and so on) and speed (double −2, triple
+  −4, four times −6) come off automatically, and low impedance cables add +1 on cyber controls.
+- **Control loss:** a failed roll rolls 1D6 on the Control Loss table with its sub-rolls: skids, slides of
+  1D10×10 feet, rollovers that do 5D6 to the vehicle, and for aircraft stalls and spins with the altitude lost.
+- **Damage:** hits on a vehicle have no locations. Its SP comes off (halved by AP) and the rest goes to its
+  SDP; at 0 it's wrecked and can't be driven. Crashes and rams do speed ÷ 20 D6 × the weight of what you hit,
+  and everyone inside takes half the dice.
+- **The GM:** vehicles join the combat tracker with a driver picked from the fight; they act on the driver's
+  turn, take hits and crashes, and the GM makes control rolls with the driver's REF and skill. Each runner's
+  garage shows on their page, and the rules reference has the vehicle tables.
+- The aerodynes, Osprey, Aerogyro, limousine, truck and boat are in the tracker from the book's vehicle pages.
+  The core book gives no structure for bikes, scooters, trucks and boats; those numbers are estimates, marked
+  as such, and editable by the GM.
+- Vehicles print on the paper sheet.
+- Fixed: two chip names didn't match their skills (Operate Heavy Machinery, Pilot (Vect. Thrust)).
+
 ## 1.1.4
 
 The book's remaining small rules.

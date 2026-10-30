@@ -52,8 +52,8 @@ const CHIPS=[["Personal Grooming","MRAM",100],["Wardrobe & Style","MRAM",100],["
  ["Expert","MRAM",200,"subject"],["Geology","MRAM",150],["History","MRAM",150],["Know Language","MRAM",200,"language"],["Mathematics","MRAM",200],["Physics","MRAM",200],
  ["Programming","MRAM",300],["Stock Market","MRAM",300],["Wilderness Survival","MRAM",200],["Zoology","MRAM",150],["Daytimer","MRAM",100],
  ["Archery","APTR",300],["Dance","APTR",150],["Driving","APTR",150],["Fencing","APTR",300],["Handgun","APTR",300],["Heavy Weapons","APTR",400],
- ["Martial Art","APTR",350,"style"],["Melee","APTR",150],["Motorcycle","APTR",150],["Operate Hvy. Machinery","APTR",200],["Pilot (Gyro)","APTR",300],
- ["Pilot (Fixed Wing)","APTR",300],["Pilot (Dirigible)","APTR",300],["Pilot (Vect. Thrust Vehicle)","APTR",350],["Rifle","APTR",300],["Submachinegun","APTR",300],
+ ["Martial Art","APTR",350,"style"],["Melee","APTR",150],["Motorcycle","APTR",150],["Operate Heavy Machinery","APTR",200],["Pilot (Gyro)","APTR",300],
+ ["Pilot (Fixed Wing)","APTR",300],["Pilot (Dirigible)","APTR",300],["Pilot (Vect. Thrust)","APTR",350],["Rifle","APTR",300],["Submachinegun","APTR",300],
  ["Aero Tech","APTR",250],["AV Tech","APTR",300],["Basic Tech","APTR",200],["Cryotank Operation","APTR",150],["Cyberdeck Design","APTR",200],["CyberTech","APTR",300],
  ["Demolitions","APTR",300],["Disguise","APTR",150],["Electronics","APTR",150],["Elect. Security","APTR",200],["First Aid","APTR",150],["Forgery","APTR",200],
  ["Gyro Tech","APTR",300],["Pharmaceuticals","APTR",200],["Pick Lock","APTR",150],["Pick Pocket","APTR",150],["Play Instrument","APTR",150],["Weaponsmith","APTR",200]];

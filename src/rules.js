@@ -569,7 +569,7 @@ function hitSP(sp,{ap,mono,hard,cover}={}){let s=Number(sp)||0;if(mono)s=Math.fl
 /* ============================== CHARACTER FILES ============================== */
 function normalizeChar(x){const b=blankChar();const c={...b,...clone(x)};
   ["skills","roleChoices","stats","lifestyle","lifepath","ip"].forEach(k=>{if(!c[k]||typeof c[k]!=="object")c[k]=b[k]});
-  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs","fx","drugsMade","chips"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
+  ["customSkills","ipLog","armor","weapons","cyber","gear","contacts","programs","fx","drugsMade","chips","vehicles"].forEach(k=>{if(!Array.isArray(c[k]))c[k]=[]});
   if(!c.deck||typeof c.deck!=="object"||Array.isArray(c.deck))c.deck=null;
   ["med","statLoss"].forEach(k=>{if(c[k]!=null&&(typeof c[k]!=="object"||Array.isArray(c[k])))c[k]={}});
   if(typeof hostsOf==="function")hostsOf(c).forEach(h=>{if(!h.loc)h.loc=freeLoc(c,hostKind(h),h)});

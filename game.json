@@ -2,7 +2,7 @@
   "format": "monolith-game",
   "id": "cyberpunk",
   "name": "Cyberpunk",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "api": 1,
   "minMonolith": "1.0.0",
   "tagline": "Night City Dossier: build runners, run the GM console and play on the map table.",
