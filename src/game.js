@@ -40,6 +40,8 @@ Monolith.theme.gmColor="#ff4459";
 
 Monolith.registerGame({
   id:"cyberpunk", api:1, diceLabel:"D10",
+  // the 3D dice (Monolith 1.1.0+): dark chrome, coral edges, cyan numbers; a 10 lands yellow, a 1 coral
+  dice:{body:"#0b0d12",edge:"#ff5e4f",text:"#3ef2ff",high:"#f9e81c",low:"#ff5e4f",font:'"Share Tech Mono",ui-monospace,monospace',edgeWidth:1.5},
   brand:role=>`<b>Night City <i>Dossier</i></b><span>CP2020 · ${role==="gm"?"GM console":"player characters"}</span>`,
   rulesets:{cp2020:{
     name:"Cyberpunk 2020",

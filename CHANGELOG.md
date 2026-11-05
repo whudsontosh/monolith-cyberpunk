@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- **3D dice in the Night City look:** with Monolith 1.1.0 or later, your rolls tumble across your screen
+  as dark chrome dice with coral edges and cyan numbers. A natural 10 lands in yellow, a 1 in coral.
+  Other runners and the GM still see only the result. Older Monolith versions simply don't show them.
+
 ## 1.2.0
 
 Vehicles, from "Vehicles in FNFF" (pg. 113) and the vehicles in the gear list.
